@@ -6,6 +6,8 @@
     <title>Word Search Puzzle Maker</title>
     <!-- Canvas Confetti Library -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Tesseract.js OCR Library -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     <style>
         :root {
             --primary: #4f46e5;
@@ -78,11 +80,11 @@
             resize: none;
         }
 
-        .themes-wrapper {
+        .themes-wrapper, .extracted-words-wrapper {
             display: flex;
             flex-wrap: wrap;
             gap: 0.4rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
         }
 
         .theme-chip {
@@ -98,6 +100,49 @@
 
         .theme-chip:hover {
             background: #c7d2fe;
+        }
+
+        .extracted-chip {
+            background: #f1f5f9;
+            color: #334155;
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #cbd5e1;
+        }
+
+        .extracted-chip:hover {
+            background: #bbf7d0;
+            border-color: #86efac;
+        }
+
+        .ocr-section {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            padding: 0.8rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .ocr-upload-btn {
+            background-color: #0284c7;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            margin-top: 0.4rem;
+        }
+
+        .ocr-upload-btn:hover {
+            background-color: #0369a1;
+        }
+
+        .ocr-status {
+            font-size: 0.85rem;
+            color: #0284c7;
+            font-weight: 600;
+            margin-top: 0.5rem;
         }
 
         .word-count-info {
@@ -182,7 +227,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Priority Selection Styling */
         .cell.found { background-color: #bbf7d0; }
         .cell.start-cell { background-color: #93c5fd !important; color: #000 !important; }
         .cell.selected { background-color: #fef08a !important; color: #000 !important; }
@@ -203,7 +247,6 @@
             color: #166534;
         }
 
-        /* Modal Popup */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -224,7 +267,6 @@
         }
         .modal-card h2 { color: #16a34a; margin-bottom: 0.5rem; }
 
-        /* Print Media Styles */
         @media print {
             body { background: white; padding: 0; }
             .container { box-shadow: none; padding: 0; max-width: 100%; }
@@ -252,13 +294,26 @@
             </select>
         </div>
 
+        <!-- OCR Upload Section -->
+        <div class="ocr-section">
+            <label>📷 Scan Words from Photo / Image:</label><br>
+            <input type="file" id="ocrInput" accept="image/*" class="hidden" onchange="processImageOCR(this)">
+            <button type="button" class="ocr-upload-btn" onclick="document.getElementById('ocrInput').click()">Upload Image / Take Photo</button>
+            <div id="ocrStatus" class="ocr-status hidden">Processing image...</div>
+            
+            <div id="extractedContainer" class="hidden" style="margin-top: 0.8rem; text-align: left;">
+                <label style="font-size: 0.8rem; color: #475569;">Tap words to add to puzzle:</label>
+                <div id="extractedWordsList" class="extracted-words-wrapper"></div>
+            </div>
+        </div>
+
         <div class="form-group">
             <label>Preset Themes:</label>
             <div class="themes-wrapper">
-                <button class="theme-chip" onclick="loadTheme('CRICKET')">🏏 Cricket</button>
-                <button class="theme-chip" onclick="loadTheme('ANIMALS')">🦁 Animals</button>
-                <button class="theme-chip" onclick="loadTheme('TECH')">💻 Tech</button>
-                <button class="theme-chip" onclick="loadTheme('FOOD')">🍕 Food</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('CRICKET')">🏏 Cricket</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('ANIMALS')">🦁 Animals</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('TECH')">💻 Tech</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('FOOD')">🍕 Food</button>
             </div>
         </div>
 
@@ -343,6 +398,74 @@
             osc2.connect(gain2); gain2.connect(audioCtx.destination);
             osc2.start(now + 0.12); osc2.stop(now + 0.45);
         } catch (e) { console.log(e); }
+    }
+
+    // OCR Image Processing Logic
+    async function processImageOCR(inputEl) {
+        if (!inputEl.files || !inputEl.files[0]) return;
+        const file = inputEl.files[0];
+        
+        const statusEl = document.getElementById('ocrStatus');
+        const containerEl = document.getElementById('extractedContainer');
+        const listEl = document.getElementById('extractedWordsList');
+
+        statusEl.textContent = "⏳ Reading image text...";
+        statusEl.classList.remove('hidden');
+        containerEl.classList.add('hidden');
+        listEl.innerHTML = '';
+
+        try {
+            const worker = await Tesseract.createWorker('eng');
+            const ret = await worker.recognize(file);
+            await worker.terminate();
+
+            // Extract clean uppercase words (minimum 3 characters long)
+            const extracted = ret.data.text
+                .toUpperCase()
+                .split(/[\s\n,.]+/)
+                .map(w => w.replace(/[^A-Z]/g, '').trim())
+                .filter(w => w.length >= 3);
+
+            // Deduplicate extracted words
+            const uniqueWords = [...new Set(extracted)];
+
+            if (uniqueWords.length === 0) {
+                statusEl.textContent = "⚠️ No clear words found in image. Try another photo.";
+                return;
+            }
+
+            statusEl.textContent = `✅ Extracted ${uniqueWords.length} words!`;
+
+            uniqueWords.forEach(word => {
+                const chip = document.createElement('button');
+                chip.type = "button";
+                chip.className = 'extracted-chip';
+                chip.textContent = `+ ${word}`;
+                chip.onclick = () => addExtractedWordToInput(word);
+                listEl.appendChild(chip);
+            });
+
+            containerEl.classList.remove('hidden');
+        } catch (err) {
+            console.error(err);
+            statusEl.textContent = "❌ Error processing image. Please try again.";
+        }
+    }
+
+    function addExtractedWordToInput(word) {
+        const textarea = document.getElementById('wordInput');
+        let parsed = getParsedWords(textarea.value);
+
+        if (parsed.length >= 10) {
+            alert("Maximum 10 words allowed.");
+            return;
+        }
+
+        if (!parsed.includes(word)) {
+            parsed.push(word);
+            textarea.value = parsed.join(', ');
+            limitWords();
+        }
     }
 
     function loadTheme(themeKey) {
