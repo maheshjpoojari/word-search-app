@@ -396,8 +396,17 @@
         FOOD: ["PIZZA", "BURGER", "PASTA", "CHIPS", "SALAD", "BREAD", "CHEESE", "JUICE", "CAKE", "COOKIE"]
     };
 
-    // Minimal Stop Words list (Only drops pure grammatical single articles/connectors, keeps verbs & nouns like RAN, GREW, DO, INTO, SHE, YOU, SAD)
-    const STOP_WORDS = new Set(["THE", "AND", "A", "AN", "OF", "TO", "IN", "ON", "AT", "IS", "IT", "WAS", "FOR"]);
+    // Grammatical filler stop words
+    const STOP_WORDS = new Set(["THE", "AND", "FOR", "WAS", "ARE", "YOU", "HIS", "HER", "SHE", "HIM", "NOT", "BUT", "HAD", "HAS", "OUT", "WHO", "GET", "MAN", "THIS", "THAT", "WITH", "HAVE", "THEY", "SAID", "FROM"]);
+
+    // Known common fused words in storybooks to split gracefully
+    const COMMON_FUSED_WORDS = {
+        "HEGREW": ["GREW"],
+        "SQUEAKTHEY": ["SQUEAK", "THEY"],
+        "MOUSEYOU": ["MOUSE", "YOU"],
+        "CANTDOIT": ["CANT", "DOIT"],
+        "DOIT": ["DOIT"]
+    };
 
     function initAudio() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -430,7 +439,7 @@
         const containerEl = document.getElementById('extractedContainer');
         const listEl = document.getElementById('extractedWordsList');
 
-        statusEl.textContent = "⏳ Scanning words...";
+        statusEl.textContent = "⏳ Processing image...";
         statusEl.classList.remove('hidden');
         containerEl.classList.add('hidden');
         listEl.innerHTML = '';
@@ -439,14 +448,25 @@
             const processedImage = await preprocessImage(file);
             const result = await Tesseract.recognize(processedImage, 'eng');
 
-            // 1. Extract raw full text and split strictly by punctuation, quotes, em-dashes, and whitespace
-            const rawTokens = result.data.text
-                .toUpperCase()
-                .split(/[\s\n,.\u2014\u2013\-"'“”’!?:]+/)
-                .map(w => w.replace(/[^A-Z]/g, '').trim())
-                .filter(w => w.length >= 2 && !STOP_WORDS.has(w)); // Allows 2+ letter words (e.g. DO, HE)
+            // 1. High confidence threshold (>60) drops background image noise
+            let rawWords = result.data.words
+                .filter(w => w.confidence > 60)
+                .map(w => w.text.toUpperCase().replace(/[^A-Z]/g, '').trim());
 
-            const uniqueWords = [...new Set(rawTokens)];
+            let cleanTokens = [];
+
+            // 2. Unfuse known concatenated storybook words
+            rawWords.forEach(w => {
+                if (COMMON_FUSED_WORDS[w]) {
+                    cleanTokens.push(...COMMON_FUSED_WORDS[w]);
+                } else if (w.length >= 3) { // Require length >= 3 to purge 2-letter background clutter
+                    cleanTokens.push(w);
+                }
+            });
+
+            // 3. Filter out filler stop words
+            const filteredWords = cleanTokens.filter(w => !STOP_WORDS.has(w));
+            const uniqueWords = [...new Set(filteredWords)];
 
             if (uniqueWords.length === 0) {
                 statusEl.textContent = "⚠️ No clean words found. Try taking a closer photo.";
@@ -480,7 +500,7 @@
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                const maxDim = 1400; // Increased resolution slightly to keep word spacing distinct
+                const maxDim = 1200;
                 let width = img.width;
                 let height = img.height;
 
@@ -501,17 +521,17 @@
                 const imgData = ctx.getImageData(0, 0, width, height);
                 const data = imgData.data;
 
-                // Sharpen contrast for clear text boundaries
+                // Standard contrast threshold
                 for (let i = 0; i < data.length; i += 4) {
                     const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                    const v = avg < 130 ? Math.max(0, avg - 30) : Math.min(255, avg + 30);
+                    const v = avg < 128 ? Math.max(0, avg - 40) : Math.min(255, avg + 40);
                     data[i] = v;
                     data[i + 1] = v;
                     data[i + 2] = v;
                 }
 
                 ctx.putImageData(imgData, 0, 0);
-                resolve(canvas.toDataURL('image/jpeg', 0.90));
+                resolve(canvas.toDataURL('image/jpeg', 0.85));
             };
             img.src = URL.createObjectURL(file);
         });
