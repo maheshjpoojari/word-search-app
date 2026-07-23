@@ -333,6 +333,13 @@
                 <button type="button" class="theme-chip" onclick="loadTheme('ANIMALS')">🦁 Animals</button>
                 <button type="button" class="theme-chip" onclick="loadTheme('TECH')">💻 Tech</button>
                 <button type="button" class="theme-chip" onclick="loadTheme('FOOD')">🍕 Food</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('CAR_NAMES')">🚗 Car Names</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('VEHICLES')">🚜 Vehicles</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('SOLAR_SYSTEM')">🪐 Solar System</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('FLOWERS')">🌸 Flowers</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('FRUITS')">🍎 Fruits</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('BODY_PARTS')">🧠 Body Parts</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('DRESSES')">👗 Dresses</button>
             </div>
         </div>
 
@@ -393,7 +400,14 @@
         CRICKET: ["BAT", "BALL", "WICKET", "UMPIRE", "SIXER", "BOUNDARY", "PITCH", "STUMPS", "CATCH", "BOWLER"],
         ANIMALS: ["LION", "TIGER", "BEAR", "ZEBRA", "GIRAFFE", "ELEPHANT", "MONKEY", "RABBIT", "PANDA", "FOX"],
         TECH: ["PYTHON", "SCRIPT", "DATA", "MOBILE", "DATABASE", "CODE", "SERVER", "SYSTEM", "CLOUD", "LOGIC"],
-        FOOD: ["PIZZA", "BURGER", "PASTA", "CHIPS", "SALAD", "BREAD", "CHEESE", "JUICE", "CAKE", "COOKIE"]
+        FOOD: ["PIZZA", "BURGER", "PASTA", "CHIPS", "SALAD", "BREAD", "CHEESE", "JUICE", "CAKE", "COOKIE"],
+        CAR_NAMES: ["BMW", "AUDI", "HONDA", "TOYOTA", "FORD", "TESLA", "NISSAN", "MAZDA", "HYUNDAI", "JAGUAR"],
+        VEHICLES: ["TRUCK", "TRAIN", "PLANE", "SCOOTER", "TRACTOR", "BICYCLE", "SUBWAY", "BUS", "ROCKET", "BOAT"],
+        SOLAR_SYSTEM: ["SUN", "EARTH", "MARS", "JUPITER", "SATURN", "NEPTUNE", "PLUTO", "VENUS", "COMET", "MOON"],
+        FLOWERS: ["ROSE", "LILY", "LOTUS", "TULIP", "DAISY", "ORCHID", "JASMINE", "VIOLET", "POPPY", "SUNFLOWER"],
+        FRUITS: ["APPLE", "BANANA", "MANGO", "ORANGE", "GRAPE", "CHERRY", "MELON", "PAPAYA", "PEACH", "GUAVA"],
+        BODY_PARTS: ["BRAIN", "HEART", "LUNGS", "ELBOW", "FINGER", "KNEE", "THROAT", "KIDNEY", "ANKLE", "SPINE"],
+        DRESSES: ["SHIRT", "FROCK", "SKIRT", "JACKET", "SWEATER", "SAREE", "KIMONO", "GOWN", "SUIT", "BLAZER"]
     };
 
     // Grammatical filler stop words
@@ -459,7 +473,7 @@
             rawWords.forEach(w => {
                 if (COMMON_FUSED_WORDS[w]) {
                     cleanTokens.push(...COMMON_FUSED_WORDS[w]);
-                } else if (w.length >= 3) { // Require length >= 3 to purge 2-letter background clutter
+                } else if (w.length >= 3) {
                     cleanTokens.push(w);
                 }
             });
