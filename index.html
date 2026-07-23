@@ -246,6 +246,16 @@
         .cell.start-cell { background-color: #93c5fd !important; color: #000 !important; }
         .cell.selected { background-color: #fef08a !important; color: #000 !important; }
 
+        /* Overrides to ensure selection visibility on already completed green tiles */
+        .cell.found.start-cell {
+            background-color: #60a5fa !important;
+            color: #ffffff !important;
+        }
+        .cell.found.selected {
+            background-color: #facc15 !important;
+            color: #000000 !important;
+        }
+
         .word-list { width: 100%; }
         .word-list h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
         .word-list ul { display: flex; flex-wrap: wrap; gap: 0.5rem; list-style: none; }
@@ -706,9 +716,9 @@
         } else {
             // Strict Forward Directions for Easy/Medium/Hard
             directions = [
-                [0, 1],   // Right
-                [1, 0],   // Down
-                [1, 1]    // Down-Right
+                [0, 1],   // Horizontal (Right)
+                [1, 0],   // Vertical (Down)
+                [1, 1]    // Diagonal (Down-Right)
             ];
         }
 
@@ -768,14 +778,17 @@
     function handleCellClick(e) {
         initAudio();
         const target = e.target;
-        const row = parseInt(target.dataset.row), col = parseInt(target.dataset.col);
+        const row = parseInt(target.dataset.row);
+        const col = parseInt(target.dataset.col);
 
+        // 1. First Cell Click (Anchor)
         if (selectedPath.length === 0) {
             selectedPath.push({ row, col, el: target });
             target.classList.add('start-cell');
             return;
         }
 
+        // 2. Tapping the exact start cell again cancels selection
         if (selectedPath.length > 0 && selectedPath[0].row === row && selectedPath[0].col === col) {
             clearSelection();
             return;
@@ -783,10 +796,12 @@
 
         const start = selectedPath[0];
 
+        // 3. Second Cell Click: Determine Vector Direction
         if (selectedPath.length === 1) {
             const dRow = row - start.row;
             const dCol = col - start.col;
 
+            // Step must be strictly adjacent (1 unit step)
             if (Math.abs(dRow) <= 1 && Math.abs(dCol) <= 1 && !(dRow === 0 && dCol === 0)) {
                 selectedPath.push({ row, col, el: target });
                 target.classList.add('selected');
@@ -794,6 +809,7 @@
             return;
         }
 
+        // 4. Subsequent Clicks: Enforce Strict Straight-Line Vector
         const dirRow = Math.sign(selectedPath[1].row - start.row);
         const dirCol = Math.sign(selectedPath[1].col - start.col);
 
