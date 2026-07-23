@@ -242,8 +242,6 @@
         .cell.found { 
             background-color: #bbf7d0 !important; 
             color: #166534 !important;
-            cursor: default !important;
-            pointer-events: none !important; /* Prevents selection on completed letters */
         }
         .cell.start-cell { background-color: #93c5fd !important; color: #000 !important; }
         .cell.selected { background-color: #fef08a !important; color: #000 !important; }
@@ -427,10 +425,8 @@
         DRESSES: ["SHIRT", "FROCK", "SKIRT", "JACKET", "SWEATER", "SAREE", "KIMONO", "GOWN", "SUIT", "BLAZER"]
     };
 
-    // Grammatical filler stop words
     const STOP_WORDS = new Set(["THE", "AND", "FOR", "WAS", "ARE", "YOU", "HIS", "HER", "SHE", "HIM", "NOT", "BUT", "HAD", "HAS", "OUT", "WHO", "GET", "MAN", "THIS", "THAT", "WITH", "HAVE", "THEY", "SAID", "FROM"]);
 
-    // Known common fused words in storybooks to split gracefully
     const COMMON_FUSED_WORDS = {
         "HEGREW": ["GREW"],
         "SQUEAKTHEY": ["SQUEAK", "THEY"],
@@ -479,14 +475,12 @@
             const processedImage = await preprocessImage(file);
             const result = await Tesseract.recognize(processedImage, 'eng');
 
-            // High confidence threshold (>60) drops background image noise
             let rawWords = result.data.words
                 .filter(w => w.confidence > 60)
                 .map(w => w.text.toUpperCase().replace(/[^A-Z]/g, '').trim());
 
             let cleanTokens = [];
 
-            // Unfuse known concatenated storybook words
             rawWords.forEach(w => {
                 if (COMMON_FUSED_WORDS[w]) {
                     cleanTokens.push(...COMMON_FUSED_WORDS[w]);
@@ -495,7 +489,6 @@
                 }
             });
 
-            // Filter out filler stop words
             const filteredWords = cleanTokens.filter(w => !STOP_WORDS.has(w));
             const uniqueWords = [...new Set(filteredWords)];
 
@@ -552,7 +545,6 @@
                 const imgData = ctx.getImageData(0, 0, width, height);
                 const data = imgData.data;
 
-                // Standard contrast threshold
                 for (let i = 0; i < data.length; i += 4) {
                     const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
                     const v = avg < 128 ? Math.max(0, avg - 40) : Math.min(255, avg + 40);
@@ -712,11 +704,11 @@
                 [1, -1]   // Down-Left
             ];
         } else {
+            // Strict Forward Directions for Easy/Medium/Hard
             directions = [
-                [0, 1],   // Horizontal Right
-                [1, 0],   // Vertical Down
-                [1, 1],   // Diagonal Down-Right
-                [-1, 1]   // Diagonal Up-Right
+                [0, 1],   // Right
+                [1, 0],   // Down
+                [1, 1]    // Down-Right
             ];
         }
 
@@ -776,20 +768,14 @@
     function handleCellClick(e) {
         initAudio();
         const target = e.target;
-
-        // Ignore clicks on already completed/found cells
-        if (target.classList.contains('found')) return;
-
         const row = parseInt(target.dataset.row), col = parseInt(target.dataset.col);
 
-        // Clicking the first cell (start selection)
         if (selectedPath.length === 0) {
             selectedPath.push({ row, col, el: target });
             target.classList.add('start-cell');
             return;
         }
 
-        // Tapping the anchor cell again clears selection
         if (selectedPath.length > 0 && selectedPath[0].row === row && selectedPath[0].col === col) {
             clearSelection();
             return;
@@ -797,12 +783,10 @@
 
         const start = selectedPath[0];
 
-        // Second click establishes fixed linear vector direction
         if (selectedPath.length === 1) {
             const dRow = row - start.row;
             const dCol = col - start.col;
 
-            // Check if step is valid 1-unit adjacent direction
             if (Math.abs(dRow) <= 1 && Math.abs(dCol) <= 1 && !(dRow === 0 && dCol === 0)) {
                 selectedPath.push({ row, col, el: target });
                 target.classList.add('selected');
@@ -810,7 +794,6 @@
             return;
         }
 
-        // Subsequent clicks: STRICT LINE CHECK
         const dirRow = Math.sign(selectedPath[1].row - start.row);
         const dirCol = Math.sign(selectedPath[1].col - start.col);
 
@@ -818,7 +801,6 @@
         const nextExpectedRow = lastCell.row + dirRow;
         const nextExpectedCol = lastCell.col + dirCol;
 
-        // Force strictly linear sequence following original vector
         if (row === nextExpectedRow && col === nextExpectedCol) {
             selectedPath.push({ row, col, el: target });
             target.classList.add('selected');
@@ -829,12 +811,16 @@
         initAudio();
         if (selectedPath.length === 0) return;
 
+        const diff = document.getElementById('difficultySelect').value;
         const selectedWord = selectedPath.map(p => gridData[p.row][p.col]).join('');
         const reversedWord = selectedWord.split('').reverse().join('');
 
         let matchedWord = null;
-        if (words.includes(selectedWord)) matchedWord = selectedWord;
-        else if (words.includes(reversedWord)) matchedWord = reversedWord;
+        if (words.includes(selectedWord)) {
+            matchedWord = selectedWord;
+        } else if (diff === 'super-hard' && words.includes(reversedWord)) {
+            matchedWord = reversedWord;
+        }
 
         if (matchedWord) {
             playSuccessSound();
