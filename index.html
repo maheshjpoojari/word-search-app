@@ -330,6 +330,12 @@
             <label>Preset Themes:</label>
             <div class="themes-wrapper">
                 <button type="button" class="theme-chip" onclick="loadTheme('CRICKET')">🏏 Cricket</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('INDIAN_CITIES')">🇮🇳 Indian Cities</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('WORLD_CITIES')">🌍 World Cities</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('INDIAN_MONUMENTS')">🏛️ Indian Monuments</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('WORLD_MONUMENTS')">🗿 World Monuments</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('MOBILES')">📱 Mobiles</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('VEGETABLES')">🥦 Vegetables</button>
                 <button type="button" class="theme-chip" onclick="loadTheme('ANIMALS')">🦁 Animals</button>
                 <button type="button" class="theme-chip" onclick="loadTheme('TECH')">💻 Tech</button>
                 <button type="button" class="theme-chip" onclick="loadTheme('FOOD')">🍕 Food</button>
@@ -398,6 +404,12 @@
 
     const PRESET_THEMES = {
         CRICKET: ["BAT", "BALL", "WICKET", "UMPIRE", "SIXER", "BOUNDARY", "PITCH", "STUMPS", "CATCH", "BOWLER"],
+        INDIAN_CITIES: ["MUMBAI", "DELHI", "BANGALORE", "JAIPUR", "CHENNAI", "KOLKATA", "HYDERABAD", "PUNE", "AGRA", "VARANASI"],
+        WORLD_CITIES: ["PARIS", "LONDON", "TOKYO", "SYDNEY", "DUBAI", "ROME", "NEWYORK", "TORONTO", "BERLIN", "MADRID"],
+        INDIAN_MONUMENTS: ["TAJMAHAL", "CHARMINAR", "GATEWAY", "REDFORT", "QUTUBMINAR", "HAWAMAHAL", "AJANTA", "KONARK", "SANCHI", "HAMPI"],
+        WORLD_MONUMENTS: ["COLOSSEUM", "PYRAMIDS", "BIGBEN", "PETRA", "PISA", "PARTHENON", "MACHUPICCHU", "EIFFEL", "STONEHENGE", "SPHINX"],
+        MOBILES: ["IPHONE", "SAMSUNG", "ONEPLUS", "PIXEL", "XIAOMI", "MOTOROLA", "REALME", "VIVO", "OPPO", "NOKIA"],
+        VEGETABLES: ["CARROT", "POTATO", "TOMATO", "ONION", "BROCCOLI", "SPINACH", "GARLIC", "GINGER", "RADISH", "BEETROOT"],
         ANIMALS: ["LION", "TIGER", "BEAR", "ZEBRA", "GIRAFFE", "ELEPHANT", "MONKEY", "RABBIT", "PANDA", "FOX"],
         TECH: ["PYTHON", "SCRIPT", "DATA", "MOBILE", "DATABASE", "CODE", "SERVER", "SYSTEM", "CLOUD", "LOGIC"],
         FOOD: ["PIZZA", "BURGER", "PASTA", "CHIPS", "SALAD", "BREAD", "CHEESE", "JUICE", "CAKE", "COOKIE"],
@@ -462,14 +474,14 @@
             const processedImage = await preprocessImage(file);
             const result = await Tesseract.recognize(processedImage, 'eng');
 
-            // 1. High confidence threshold (>60) drops background image noise
+            // High confidence threshold (>60) drops background image noise
             let rawWords = result.data.words
                 .filter(w => w.confidence > 60)
                 .map(w => w.text.toUpperCase().replace(/[^A-Z]/g, '').trim());
 
             let cleanTokens = [];
 
-            // 2. Unfuse known concatenated storybook words
+            // Unfuse known concatenated storybook words
             rawWords.forEach(w => {
                 if (COMMON_FUSED_WORDS[w]) {
                     cleanTokens.push(...COMMON_FUSED_WORDS[w]);
@@ -478,7 +490,7 @@
                 }
             });
 
-            // 3. Filter out filler stop words
+            // Filter out filler stop words
             const filteredWords = cleanTokens.filter(w => !STOP_WORDS.has(w));
             const uniqueWords = [...new Set(filteredWords)];
 
