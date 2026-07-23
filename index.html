@@ -13,6 +13,7 @@
             --text: #0f172a;
             --border: #e2e8f0;
             --highlight: #fef08a;
+            --start-cell: #93c5fd;
         }
 
         * {
@@ -89,6 +90,31 @@
             background-color: var(--primary-hover);
         }
 
+        .action-btns {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .submit-btn {
+            background-color: #16a34a;
+            flex: 1;
+        }
+
+        .submit-btn:hover {
+            background-color: #15803d;
+        }
+
+        .cancel-btn {
+            background-color: #dc2626;
+            flex: 1;
+        }
+
+        .cancel-btn:hover {
+            background-color: #b91c1c;
+        }
+
         .secondary-btn {
             background-color: #64748b;
             margin-top: 1rem;
@@ -103,7 +129,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1.25rem;
         }
 
         #grid {
@@ -113,7 +139,6 @@
             border: 2px solid var(--border);
             border-radius: 6px;
             user-select: none;
-            touch-action: none;
         }
 
         .cell {
@@ -127,6 +152,11 @@
             font-size: 1.1rem;
             text-transform: uppercase;
             cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .cell.start-cell {
+            background-color: var(--start-cell) !important;
         }
 
         .cell.selected {
@@ -134,7 +164,7 @@
         }
 
         .cell.found {
-            background-color: #bbf7d0;
+            background-color: #bbf7d0 !important;
         }
 
         .word-list {
@@ -184,6 +214,12 @@
     <!-- Puzzle Display Section -->
     <div id="puzzleArea" class="puzzle-area hidden">
         <div id="grid"></div>
+
+        <div class="action-btns">
+            <button class="submit-btn" onclick="submitSelection()">Submit Word</button>
+            <button class="cancel-btn" onclick="clearSelection()">Clear Selection</button>
+        </div>
+
         <div class="word-list">
             <h3>Words to Find:</h3>
             <ul id="wordListDisplay"></ul>
@@ -196,16 +232,13 @@
     const GRID_SIZE = 10;
     let gridData = [];
     let words = [];
-    let isSelecting = false;
-    let selectedCells = [];
+    let selectedPath = []; // Stores array of {row, col, el}
 
-    // Synthesized Sound Effect using Web Audio API
     function playSuccessSound() {
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const now = audioCtx.currentTime;
             
-            // Note 1 (E5)
             const osc1 = audioCtx.createOscillator();
             const gain1 = audioCtx.createGain();
             osc1.type = 'sine';
@@ -217,7 +250,6 @@
             osc1.start(now);
             osc1.stop(now + 0.2);
 
-            // Note 2 (A5) - slightly delayed
             const osc2 = audioCtx.createOscillator();
             const gain2 = audioCtx.createGain();
             osc2.type = 'sine';
@@ -233,7 +265,6 @@
         }
     }
 
-    // Helper to extract clean array of words
     function getParsedWords(text) {
         return text
             .toUpperCase()
@@ -242,13 +273,11 @@
             .filter(w => w.length > 0);
     }
 
-    // Restrict input to 10 words maximum
     function limitWords() {
         const textarea = document.getElementById('wordInput');
         let parsed = getParsedWords(textarea.value);
         
         if (parsed.length > 10) {
-            // Keep only first 10 words
             parsed = parsed.slice(0, 10);
             textarea.value = parsed.join(', ');
         }
@@ -271,12 +300,12 @@
         renderGrid();
         renderWordList();
 
-        // Hide form and show puzzle
         document.getElementById('inputSection').classList.add('hidden');
         document.getElementById('puzzleArea').classList.remove('hidden');
     }
 
     function resetToInput() {
+        clearSelection();
         document.getElementById('puzzleArea').classList.add('hidden');
         document.getElementById('inputSection').classList.remove('hidden');
     }
@@ -348,82 +377,90 @@
                 cell.dataset.row = r;
                 cell.dataset.col = c;
 
-                cell.addEventListener('mousedown', startSelection);
-                cell.addEventListener('mouseenter', continueSelection);
-                cell.addEventListener('mouseup', endSelection);
-
-                cell.addEventListener('touchstart', handleTouchStart);
-                cell.addEventListener('touchmove', handleTouchMove);
-                cell.addEventListener('touchend', endSelection);
-
+                cell.addEventListener('click', handleCellClick);
                 gridEl.appendChild(cell);
             }
         }
     }
 
-    function startSelection(e) {
-        isSelecting = true;
-        selectedCells = [e.target];
-        e.target.classList.add('selected');
-    }
+    function handleCellClick(e) {
+        const target = e.target;
+        const row = parseInt(target.dataset.row);
+        const col = parseInt(target.dataset.col);
 
-    function continueSelection(e) {
-        if (!isSelecting) return;
-        if (!selectedCells.includes(e.target)) {
-            selectedCells.push(e.target);
-            e.target.classList.add('selected');
+        // Check if tapping the first cell again -> cancel
+        if (selectedPath.length > 0 && selectedPath[0].row === row && selectedPath[0].col === col) {
+            clearSelection();
+            return;
+        }
+
+        // Check if tapping the last cell again -> submit word
+        if (selectedPath.length > 1 && selectedPath[selectedPath.length - 1].row === row && selectedPath[selectedPath.length - 1].col === col) {
+            submitSelection();
+            return;
+        }
+
+        // Add to path if empty or adjacent to last selected cell
+        if (selectedPath.length === 0) {
+            selectedPath.push({ row, col, el: target });
+            target.classList.add('start-cell');
+        } else {
+            const lastCell = selectedPath[selectedPath.length - 1];
+            const dRow = Math.abs(row - lastCell.row);
+            const dCol = Math.abs(col - lastCell.col);
+
+            // Must be adjacent (distance <= 1 in any direction)
+            if (dRow <= 1 && dCol <= 1 && !(dRow === 0 && dCol === 0)) {
+                // Check if already in path to prevent looping
+                const exists = selectedPath.some(p => p.row === row && p.col === col);
+                if (!exists) {
+                    selectedPath.push({ row, col, el: target });
+                    target.classList.add('selected');
+                }
+            }
         }
     }
 
-    function handleTouchStart(e) {
-        isSelecting = true;
-        const touch = e.touches[0];
-        const target = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (target && target.classList.contains('cell')) {
-            selectedCells = [target];
-            target.classList.add('selected');
-        }
-    }
+    function submitSelection() {
+        if (selectedPath.length === 0) return;
 
-    function handleTouchMove(e) {
-        if (!isSelecting) return;
-        const touch = e.touches[0];
-        const target = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (target && target.classList.contains('cell') && !selectedCells.includes(target)) {
-            selectedCells.push(target);
-            target.classList.add('selected');
-        }
-    }
-
-    function endSelection() {
-        if (!isSelecting) return;
-        isSelecting = false;
-
-        const selectedWord = selectedCells.map(c => c.textContent).join('');
+        const selectedWord = selectedPath.map(p => gridData[p.row][p.col]).join('');
         const reversedWord = selectedWord.split('').reverse().join('');
 
-        if (words.includes(selectedWord)) {
-            markAsFound(selectedWord);
-        } else if (words.includes(reversedWord)) {
-            markAsFound(reversedWord);
+        let matchedWord = null;
+        if (words.includes(selectedWord)) matchedWord = selectedWord;
+        else if (words.includes(reversedWord)) matchedWord = reversedWord;
+
+        if (matchedWord) {
+            const wordEl = document.getElementById(`word-${matchedWord}`);
+            if (wordEl && !wordEl.classList.contains('found-word')) {
+                playSuccessSound();
+            }
+
+            selectedPath.forEach(p => {
+                p.el.classList.remove('start-cell', 'selected');
+                p.el.classList.add('found');
+            });
+            markWordAsFound(matchedWord);
+            selectedPath = [];
         } else {
-            selectedCells.forEach(c => c.classList.remove('selected'));
+            // Incorrect attempt -> flash red briefly then clear
+            selectedPath.forEach(p => {
+                p.el.style.backgroundColor = '#fca5a5';
+            });
+            setTimeout(() => {
+                selectedPath.forEach(p => p.el.style.backgroundColor = '');
+                clearSelection();
+            }, 300);
         }
-        selectedCells = [];
     }
 
-    function markAsFound(word) {
-        // Check if word wasn't already found before playing sound
-        const wordEl = document.getElementById(`word-${word}`);
-        if (wordEl && !wordEl.classList.contains('found-word')) {
-            playSuccessSound();
-        }
-
-        selectedCells.forEach(c => {
-            c.classList.remove('selected');
-            c.classList.add('found');
+    function clearSelection() {
+        selectedPath.forEach(p => {
+            p.el.classList.remove('start-cell', 'selected');
+            p.el.style.backgroundColor = '';
         });
-        markWordAsFound(word);
+        selectedPath = [];
     }
 
     function renderWordList() {
