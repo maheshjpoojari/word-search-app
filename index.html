@@ -243,12 +243,12 @@
     <!-- Input Section -->
     <div id="inputSection">
         <div class="form-group">
-            <label for="difficultySelect">Select Difficulty Grid:</label>
+            <label for="difficultySelect">Select Difficulty:</label>
             <select id="difficultySelect">
-                <option value="easy">Easy (8x8 Grid - Forward & L-to-R Diagonals)</option>
-                <option value="medium" selected>Medium (10x10 Grid - Forward & L-to-R Diagonals)</option>
-                <option value="hard">Hard (12x12 Grid - Forward & L-to-R Diagonals)</option>
-                <option value="super-hard">Super Hard (15x15 Grid - All 8 Directions)</option>
+                <option value="easy">Easy (Forward & L-to-R Diagonals)</option>
+                <option value="medium" selected>Medium (Forward & L-to-R Diagonals)</option>
+                <option value="hard">Hard (Forward & L-to-R Diagonals)</option>
+                <option value="super-hard">Super Hard (All 8 Directions)</option>
             </select>
         </div>
 
@@ -473,7 +473,6 @@
                 [1, -1]   // Down-Left
             ];
         } else {
-            // Easy, Medium, Hard: Right, Down, Down-Right (L-to-R), Up-Right (L-to-R)
             directions = [
                 [0, 1],   // Horizontal Right
                 [1, 0],   // Vertical Down
