@@ -239,7 +239,12 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        .cell.found { background-color: #bbf7d0; }
+        .cell.found { 
+            background-color: #bbf7d0 !important; 
+            color: #166534 !important;
+            cursor: default !important;
+            pointer-events: none !important; /* Prevents selection on completed letters */
+        }
         .cell.start-cell { background-color: #93c5fd !important; color: #000 !important; }
         .cell.selected { background-color: #fef08a !important; color: #000 !important; }
 
@@ -771,29 +776,52 @@
     function handleCellClick(e) {
         initAudio();
         const target = e.target;
+
+        // Ignore clicks on already completed/found cells
+        if (target.classList.contains('found')) return;
+
         const row = parseInt(target.dataset.row), col = parseInt(target.dataset.col);
 
-        if (selectedPath.length > 0 && selectedPath[0].row === row && selectedPath[0].col === col) {
-            clearSelection(); return;
-        }
-
-        if (selectedPath.length > 1 && selectedPath[selectedPath.length - 1].row === row && selectedPath[selectedPath.length - 1].col === col) {
-            submitSelection(); return;
-        }
-
+        // Clicking the first cell (start selection)
         if (selectedPath.length === 0) {
             selectedPath.push({ row, col, el: target });
             target.classList.add('start-cell');
-        } else {
-            const lastCell = selectedPath[selectedPath.length - 1];
-            const dRow = Math.abs(row - lastCell.row), dCol = Math.abs(col - lastCell.col);
+            return;
+        }
 
-            if (dRow <= 1 && dCol <= 1 && !(dRow === 0 && dCol === 0)) {
-                if (!selectedPath.some(p => p.row === row && p.col === col)) {
-                    selectedPath.push({ row, col, el: target });
-                    target.classList.add('selected');
-                }
+        // Tapping the anchor cell again clears selection
+        if (selectedPath.length > 0 && selectedPath[0].row === row && selectedPath[0].col === col) {
+            clearSelection();
+            return;
+        }
+
+        const start = selectedPath[0];
+
+        // Second click establishes fixed linear vector direction
+        if (selectedPath.length === 1) {
+            const dRow = row - start.row;
+            const dCol = col - start.col;
+
+            // Check if step is valid 1-unit adjacent direction
+            if (Math.abs(dRow) <= 1 && Math.abs(dCol) <= 1 && !(dRow === 0 && dCol === 0)) {
+                selectedPath.push({ row, col, el: target });
+                target.classList.add('selected');
             }
+            return;
+        }
+
+        // Subsequent clicks: STRICT LINE CHECK
+        const dirRow = Math.sign(selectedPath[1].row - start.row);
+        const dirCol = Math.sign(selectedPath[1].col - start.col);
+
+        const lastCell = selectedPath[selectedPath.length - 1];
+        const nextExpectedRow = lastCell.row + dirRow;
+        const nextExpectedCol = lastCell.col + dirCol;
+
+        // Force strictly linear sequence following original vector
+        if (row === nextExpectedRow && col === nextExpectedCol) {
+            selectedPath.push({ row, col, el: target });
+            target.classList.add('selected');
         }
     }
 
