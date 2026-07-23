@@ -53,6 +53,10 @@
             margin-bottom: 1.5rem;
         }
 
+        .hidden {
+            display: none !important;
+        }
+
         textarea {
             width: 100%;
             height: 100px;
@@ -61,6 +65,12 @@
             border-radius: 8px;
             font-size: 1rem;
             resize: none;
+        }
+
+        .word-count-info {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: right;
         }
 
         button {
@@ -77,6 +87,16 @@
 
         button:hover {
             background-color: var(--primary-hover);
+        }
+
+        .secondary-btn {
+            background-color: #64748b;
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .secondary-btn:hover {
+            background-color: #475569;
         }
 
         .puzzle-area {
@@ -153,18 +173,22 @@
 <div class="container">
     <h1>Word Search Maker</h1>
     
-    <div class="input-section">
+    <!-- Input Section -->
+    <div id="inputSection" class="input-section">
         <label for="wordInput">Enter up to 10 words (separated by commas or new lines):</label>
-        <textarea id="wordInput" placeholder="APPLE, BANANA, CHERRY, GRAPE, LEMON"></textarea>
+        <textarea id="wordInput" placeholder="APPLE, BANANA, CHERRY, GRAPE, LEMON" oninput="limitWords()"></textarea>
+        <div class="word-count-info" id="wordCount">Words: 0 / 10</div>
         <button onclick="generatePuzzle()">Generate Puzzle</button>
     </div>
 
-    <div class="puzzle-area">
+    <!-- Puzzle Display Section -->
+    <div id="puzzleArea" class="puzzle-area hidden">
         <div id="grid"></div>
         <div class="word-list">
             <h3>Words to Find:</h3>
             <ul id="wordListDisplay"></ul>
         </div>
+        <button class="secondary-btn" onclick="resetToInput()">Create New Puzzle</button>
     </div>
 </div>
 
@@ -175,14 +199,66 @@
     let isSelecting = false;
     let selectedCells = [];
 
-    function generatePuzzle() {
-        const rawInput = document.getElementById('wordInput').value;
-        words = rawInput
+    // Synthesized Sound Effect using Web Audio API
+    function playSuccessSound() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const now = audioCtx.currentTime;
+            
+            // Note 1 (E5)
+            const osc1 = audioCtx.createOscillator();
+            const gain1 = audioCtx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(659.25, now);
+            gain1.gain.setValueAtTime(0.15, now);
+            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+            osc1.connect(gain1);
+            gain1.connect(audioCtx.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.2);
+
+            // Note 2 (A5) - slightly delayed
+            const osc2 = audioCtx.createOscillator();
+            const gain2 = audioCtx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(880.00, now + 0.1);
+            gain2.gain.setValueAtTime(0.15, now + 0.1);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc2.connect(gain2);
+            gain2.connect(audioCtx.destination);
+            osc2.start(now + 0.1);
+            osc2.stop(now + 0.4);
+        } catch (e) {
+            console.log("Audio play blocked or unsupported:", e);
+        }
+    }
+
+    // Helper to extract clean array of words
+    function getParsedWords(text) {
+        return text
             .toUpperCase()
             .split(/[\n,]+/)
             .map(w => w.trim().replace(/[^A-Z]/g, ''))
-            .filter(w => w.length > 0)
-            .slice(0, 10);
+            .filter(w => w.length > 0);
+    }
+
+    // Restrict input to 10 words maximum
+    function limitWords() {
+        const textarea = document.getElementById('wordInput');
+        let parsed = getParsedWords(textarea.value);
+        
+        if (parsed.length > 10) {
+            // Keep only first 10 words
+            parsed = parsed.slice(0, 10);
+            textarea.value = parsed.join(', ');
+        }
+        
+        document.getElementById('wordCount').textContent = `Words: ${parsed.length} / 10`;
+    }
+
+    function generatePuzzle() {
+        const rawInput = document.getElementById('wordInput').value;
+        words = getParsedWords(rawInput).slice(0, 10);
 
         if (words.length === 0) {
             alert("Please enter at least one valid word.");
@@ -194,6 +270,15 @@
         fillEmptyCells();
         renderGrid();
         renderWordList();
+
+        // Hide form and show puzzle
+        document.getElementById('inputSection').classList.add('hidden');
+        document.getElementById('puzzleArea').classList.remove('hidden');
+    }
+
+    function resetToInput() {
+        document.getElementById('puzzleArea').classList.add('hidden');
+        document.getElementById('inputSection').classList.remove('hidden');
     }
 
     function initGrid() {
@@ -328,6 +413,12 @@
     }
 
     function markAsFound(word) {
+        // Check if word wasn't already found before playing sound
+        const wordEl = document.getElementById(`word-${word}`);
+        if (wordEl && !wordEl.classList.contains('found-word')) {
+            playSuccessSound();
+        }
+
         selectedCells.forEach(c => {
             c.classList.remove('selected');
             c.classList.add('found');
