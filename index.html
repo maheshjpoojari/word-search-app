@@ -44,11 +44,23 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            margin-bottom: 1.2rem;
+        }
+
         h1 {
             font-size: 1.5rem;
-            text-align: center;
-            margin-bottom: 1rem;
             color: var(--primary);
+        }
+
+        .logo-icon {
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
         }
 
         .hidden {
@@ -246,7 +258,6 @@
         .cell.start-cell { background-color: #93c5fd !important; color: #000 !important; }
         .cell.selected { background-color: #fef08a !important; color: #000 !important; }
 
-        /* Overrides to ensure selection visibility on already completed green tiles */
         .cell.found.start-cell {
             background-color: #60a5fa !important;
             color: #ffffff !important;
@@ -305,7 +316,17 @@
 <body>
 
 <div class="container">
-    <h1>Word Search Studio</h1>
+    <!-- Camera-Lens Grid Header -->
+    <div class="app-header">
+        <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="10" width="80" height="80" rx="18" fill="#4F46E5"/>
+            <path d="M36 22V78M64 22V78M22 36H78M22 64H78" stroke="#818CF8" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="26" stroke="#FFFFFF" stroke-width="4.5" stroke-dasharray="7 4"/>
+            <line x1="32" y1="32" x2="68" y2="68" stroke="#4ADE80" stroke-width="8" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="3.5" fill="#FFFFFF"/>
+        </svg>
+        <h1>Word Search Studio</h1>
+    </div>
     
     <!-- Input Section -->
     <div id="inputSection">
@@ -714,7 +735,6 @@
                 [1, -1]   // Down-Left
             ];
         } else {
-            // Strict Forward Directions for Easy/Medium/Hard
             directions = [
                 [0, 1],   // Horizontal (Right)
                 [1, 0],   // Vertical (Down)
@@ -781,14 +801,12 @@
         const row = parseInt(target.dataset.row);
         const col = parseInt(target.dataset.col);
 
-        // 1. First Cell Click (Anchor)
         if (selectedPath.length === 0) {
             selectedPath.push({ row, col, el: target });
             target.classList.add('start-cell');
             return;
         }
 
-        // 2. Tapping the exact start cell again cancels selection
         if (selectedPath.length > 0 && selectedPath[0].row === row && selectedPath[0].col === col) {
             clearSelection();
             return;
@@ -796,12 +814,10 @@
 
         const start = selectedPath[0];
 
-        // 3. Second Cell Click: Determine Vector Direction
         if (selectedPath.length === 1) {
             const dRow = row - start.row;
             const dCol = col - start.col;
 
-            // Step must be strictly adjacent (1 unit step)
             if (Math.abs(dRow) <= 1 && Math.abs(dCol) <= 1 && !(dRow === 0 && dCol === 0)) {
                 selectedPath.push({ row, col, el: target });
                 target.classList.add('selected');
@@ -809,7 +825,6 @@
             return;
         }
 
-        // 4. Subsequent Clicks: Enforce Strict Straight-Line Vector
         const dirRow = Math.sign(selectedPath[1].row - start.row);
         const dirCol = Math.sign(selectedPath[1].col - start.col);
 
