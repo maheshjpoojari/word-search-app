@@ -232,36 +232,49 @@
     const GRID_SIZE = 10;
     let gridData = [];
     let words = [];
-    let selectedPath = []; // Stores array of {row, col, el}
+    let selectedPath = [];
+    let audioCtx = null;
+
+    // Mobile-friendly Web Audio API Sound Chime
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
 
     function playSuccessSound() {
         try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            initAudio();
             const now = audioCtx.currentTime;
             
+            // Note 1 (E5)
             const osc1 = audioCtx.createOscillator();
             const gain1 = audioCtx.createGain();
             osc1.type = 'sine';
             osc1.frequency.setValueAtTime(659.25, now);
-            gain1.gain.setValueAtTime(0.15, now);
-            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+            gain1.gain.setValueAtTime(0.2, now);
+            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
             osc1.connect(gain1);
             gain1.connect(audioCtx.destination);
             osc1.start(now);
-            osc1.stop(now + 0.2);
+            osc1.stop(now + 0.25);
 
+            // Note 2 (A5)
             const osc2 = audioCtx.createOscillator();
             const gain2 = audioCtx.createGain();
             osc2.type = 'sine';
-            osc2.frequency.setValueAtTime(880.00, now + 0.1);
-            gain2.gain.setValueAtTime(0.15, now + 0.1);
-            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc2.frequency.setValueAtTime(880.00, now + 0.12);
+            gain2.gain.setValueAtTime(0.2, now + 0.12);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
             osc2.connect(gain2);
             gain2.connect(audioCtx.destination);
-            osc2.start(now + 0.1);
-            osc2.stop(now + 0.4);
+            osc2.start(now + 0.12);
+            osc2.stop(now + 0.45);
         } catch (e) {
-            console.log("Audio play blocked or unsupported:", e);
+            console.log("Audio play error:", e);
         }
     }
 
@@ -286,6 +299,7 @@
     }
 
     function generatePuzzle() {
+        initAudio(); // Initialize audio on direct user button tap
         const rawInput = document.getElementById('wordInput').value;
         words = getParsedWords(rawInput).slice(0, 10);
 
@@ -294,8 +308,30 @@
             return;
         }
 
-        initGrid();
-        words.forEach(word => placeWord(word));
+        // Sort longest words first to guarantee placement on grid
+        words.sort((a, b) => b.length - a.length);
+
+        let success = false;
+        let retries = 0;
+
+        // Ensure full layout retry if any word fails to fit
+        while (!success && retries < 50) {
+            retries++;
+            initGrid();
+            let placedAll = true;
+
+            for (let word of words) {
+                if (!placeWord(word)) {
+                    placedAll = false;
+                    break;
+                }
+            }
+
+            if (placedAll) {
+                success = true;
+            }
+        }
+
         fillEmptyCells();
         renderGrid();
         renderWordList();
@@ -315,19 +351,22 @@
     }
 
     function placeWord(word) {
-        if (word.length > GRID_SIZE) return;
+        if (word.length > GRID_SIZE) return false;
 
+        // Expanded 8 directional vectors for maximum fit probability
         const directions = [
-            [0, 1],   // Horizontal right
-            [1, 0],   // Vertical down
-            [1, 1],   // Diagonal down-right
-            [-1, 1]   // Diagonal up-right
+            [0, 1],   // Right
+            [1, 0],   // Down
+            [1, 1],   // Down-Right
+            [-1, 1],  // Up-Right
+            [0, -1],  // Left
+            [-1, 0],  // Up
+            [-1, -1], // Up-Left
+            [1, -1]   // Down-Left
         ];
 
-        let placed = false;
         let attempts = 0;
-
-        while (!placed && attempts < 100) {
+        while (attempts < 200) {
             attempts++;
             const dir = directions[Math.floor(Math.random() * directions.length)];
             const row = Math.floor(Math.random() * GRID_SIZE);
@@ -337,9 +376,10 @@
                 for (let i = 0; i < word.length; i++) {
                     gridData[row + i * dir[0]][col + i * dir[1]] = word[i];
                 }
-                placed = true;
+                return true;
             }
         }
+        return false;
     }
 
     function canPlace(word, row, col, dir) {
@@ -384,23 +424,23 @@
     }
 
     function handleCellClick(e) {
+        initAudio();
         const target = e.target;
         const row = parseInt(target.dataset.row);
         const col = parseInt(target.dataset.col);
 
-        // Check if tapping the first cell again -> cancel
+        // Cancel selection if first cell tapped again
         if (selectedPath.length > 0 && selectedPath[0].row === row && selectedPath[0].col === col) {
             clearSelection();
             return;
         }
 
-        // Check if tapping the last cell again -> submit word
+        // Submit selection if last cell tapped again
         if (selectedPath.length > 1 && selectedPath[selectedPath.length - 1].row === row && selectedPath[selectedPath.length - 1].col === col) {
             submitSelection();
             return;
         }
 
-        // Add to path if empty or adjacent to last selected cell
         if (selectedPath.length === 0) {
             selectedPath.push({ row, col, el: target });
             target.classList.add('start-cell');
@@ -409,9 +449,8 @@
             const dRow = Math.abs(row - lastCell.row);
             const dCol = Math.abs(col - lastCell.col);
 
-            // Must be adjacent (distance <= 1 in any direction)
+            // Must be adjacent (distance <= 1)
             if (dRow <= 1 && dCol <= 1 && !(dRow === 0 && dCol === 0)) {
-                // Check if already in path to prevent looping
                 const exists = selectedPath.some(p => p.row === row && p.col === col);
                 if (!exists) {
                     selectedPath.push({ row, col, el: target });
@@ -422,6 +461,7 @@
     }
 
     function submitSelection() {
+        initAudio();
         if (selectedPath.length === 0) return;
 
         const selectedWord = selectedPath.map(p => gridData[p.row][p.col]).join('');
@@ -432,10 +472,7 @@
         else if (words.includes(reversedWord)) matchedWord = reversedWord;
 
         if (matchedWord) {
-            const wordEl = document.getElementById(`word-${matchedWord}`);
-            if (wordEl && !wordEl.classList.contains('found-word')) {
-                playSuccessSound();
-            }
+            playSuccessSound();
 
             selectedPath.forEach(p => {
                 p.el.classList.remove('start-cell', 'selected');
@@ -444,7 +481,6 @@
             markWordAsFound(matchedWord);
             selectedPath = [];
         } else {
-            // Incorrect attempt -> flash red briefly then clear
             selectedPath.forEach(p => {
                 p.el.style.backgroundColor = '#fca5a5';
             });
