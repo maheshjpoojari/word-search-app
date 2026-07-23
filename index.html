@@ -182,9 +182,10 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        .cell.start-cell { background-color: var(--start-cell) !important; }
-        .cell.selected { background-color: var(--highlight); }
-        .cell.found { background-color: #bbf7d0 !important; }
+        /* Priority Selection Styling */
+        .cell.found { background-color: #bbf7d0; }
+        .cell.start-cell { background-color: #93c5fd !important; color: #000 !important; }
+        .cell.selected { background-color: #fef08a !important; color: #000 !important; }
 
         .word-list { width: 100%; }
         .word-list h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
@@ -314,7 +315,7 @@
     let foundWordsCount = 0;
 
     const PRESET_THEMES = {
-        CRICKET: ["BAT", "BALL", "WICKET", "UPIRE", "SIXER", "BOUNDARY", "PITCH", "STUMPS", "CATCH", "BOWLER"],
+        CRICKET: ["BAT", "BALL", "WICKET", "UMPIRE", "SIXER", "BOUNDARY", "PITCH", "STUMPS", "CATCH", "BOWLER"],
         ANIMALS: ["LION", "TIGER", "BEAR", "ZEBRA", "GIRAFFE", "ELEPHANT", "MONKEY", "RABBIT", "PANDA", "FOX"],
         TECH: ["PYTHON", "SCRIPT", "DATA", "MOBILE", "DATABASE", "CODE", "SERVER", "SYSTEM", "CLOUD", "LOGIC"],
         FOOD: ["PIZZA", "BURGER", "PASTA", "CHIPS", "SALAD", "BREAD", "CHEESE", "JUICE", "CAKE", "COOKIE"]
@@ -462,9 +463,8 @@
             [0, -1], [-1, 0], [-1, -1], [1, -1]
         ];
 
-        // Restrict directions on Easy mode
         if (diff === 'easy') {
-            directions = [[0, 1], [1, 0]]; // Horizontal right, Vertical down
+            directions = [[0, 1], [1, 0]];
         }
 
         let attempts = 0;
@@ -569,9 +569,13 @@
             markWordAsFound(matchedWord);
             selectedPath = [];
         } else {
-            selectedPath.forEach(p => p.el.style.backgroundColor = '#fca5a5');
+            selectedPath.forEach(p => {
+                if (!p.el.classList.contains('found')) p.el.style.backgroundColor = '#fca5a5';
+            });
             setTimeout(() => {
-                selectedPath.forEach(p => p.el.style.backgroundColor = '');
+                selectedPath.forEach(p => {
+                    if (!p.el.classList.contains('found')) p.el.style.backgroundColor = '';
+                });
                 clearSelection();
             }, 300);
         }
@@ -580,7 +584,6 @@
     function clearSelection() {
         selectedPath.forEach(p => {
             p.el.classList.remove('start-cell', 'selected');
-            p.el.style.backgroundColor = '';
         });
         selectedPath = [];
     }
@@ -622,7 +625,6 @@
         
         document.getElementById('victoryModal').classList.remove('hidden');
 
-        // Trigger Confetti
         if (typeof confetti === 'function') {
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         }
