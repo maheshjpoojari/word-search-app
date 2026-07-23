@@ -1,22 +1,794 @@
-<!-- OCR Upload Section -->
-<div class="ocr-section">
-    <label>📷 Scan Words from Photo / Image:</label><br>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Search Puzzle Maker</title>
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Tesseract.js OCR Library -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+            --highlight: #fef08a;
+            --start-cell: #93c5fd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        select, textarea {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        textarea {
+            height: 80px;
+            resize: none;
+        }
+
+        .themes-wrapper, .extracted-words-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .theme-chip {
+            background: #e0e7ff;
+            color: var(--primary);
+            padding: 0.3rem 0.7rem;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+
+        .theme-chip:hover {
+            background: #c7d2fe;
+        }
+
+        .extracted-chip {
+            background: #f1f5f9;
+            color: #334155;
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #cbd5e1;
+        }
+
+        .extracted-chip:hover {
+            background: #bbf7d0;
+            border-color: #86efac;
+        }
+
+        .ocr-section {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            padding: 0.8rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .ocr-btn-group {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .ocr-upload-btn {
+            background-color: #0284c7;
+            color: white;
+            font-size: 0.85rem;
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .ocr-upload-btn:hover {
+            background-color: #0369a1;
+        }
+
+        .ocr-status {
+            font-size: 0.85rem;
+            color: #0284c7;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .word-count-info {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: right;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .submit-btn { background-color: #16a34a; flex: 1; }
+        .submit-btn:hover { background-color: #15803d; }
+        .cancel-btn { background-color: #dc2626; flex: 1; }
+        .cancel-btn:hover { background-color: #b91c1c; }
+
+        .secondary-btn {
+            background-color: #64748b;
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+
+        .puzzle-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-weight: 600;
+            font-size: 0.95rem;
+            background: #f1f5f9;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .puzzle-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        #grid {
+            display: grid;
+            gap: 2px;
+            background-color: var(--border);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            user-select: none;
+        }
+
+        .cell {
+            width: 32px;
+            height: 32px;
+            background-color: var(--card-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .cell.found { background-color: #bbf7d0; }
+        .cell.start-cell { background-color: #93c5fd !important; color: #000 !important; }
+        .cell.selected { background-color: #fef08a !important; color: #000 !important; }
+
+        .word-list { width: 100%; }
+        .word-list h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .word-list ul { display: flex; flex-wrap: wrap; gap: 0.5rem; list-style: none; }
+        .word-item {
+            padding: 0.4rem 0.8rem;
+            background: #f1f5f9;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .word-item.found-word {
+            text-decoration: line-through;
+            background-color: #bbf7d0;
+            color: #166534;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 100;
+        }
+        .modal-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 350px;
+            width: 100%;
+        }
+        .modal-card h2 { color: #16a34a; margin-bottom: 0.5rem; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; }
+            .action-btns, .secondary-btn, .input-section, #timerDisplay, button { display: none !important; }
+            #grid { border: 2px solid #000; }
+            .cell { border: 1px solid #ddd; color: black !important; background: white !important; }
+            .word-item.found-word { text-decoration: none; background: transparent; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Word Search Maker</h1>
     
-    <!-- Gallery Picker -->
-    <input type="file" id="ocrInputGallery" accept="image/*,android/force-camera-workaround" class="hidden" onchange="processImageOCR(this)">
-    
-    <!-- Direct Camera Capture -->
-    <input type="file" id="ocrInputCamera" accept="image/*" capture="environment" class="hidden" onchange="processImageOCR(this)">
-    
-    <div style="display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.5rem; flex-wrap: wrap;">
-        <button type="button" class="ocr-upload-btn" onclick="document.getElementById('ocrInputCamera').click()">📷 Take Photo</button>
-        <button type="button" class="ocr-upload-btn" style="background-color: #475569;" onclick="document.getElementById('ocrInputGallery').click()">📁 Upload Image</button>
+    <!-- Input Section -->
+    <div id="inputSection">
+        <div class="form-group">
+            <label for="difficultySelect">Select Difficulty:</label>
+            <select id="difficultySelect">
+                <option value="easy">Easy (Forward & L-to-R Diagonals)</option>
+                <option value="medium" selected>Medium (Forward & L-to-R Diagonals)</option>
+                <option value="hard">Hard (Forward & L-to-R Diagonals)</option>
+                <option value="super-hard">Super Hard (All 8 Directions)</option>
+            </select>
+        </div>
+
+        <!-- OCR Scan Section -->
+        <div class="ocr-section">
+            <label>📷 Scan Words from Photo / Image:</label>
+            
+            <!-- Hidden File Inputs with direct Inline Style Prevention -->
+            <input type="file" id="ocrInputGallery" accept="image/*" style="display: none;" onchange="processImageOCR(this)">
+            <input type="file" id="ocrInputCamera" accept="image/*" capture="environment" style="display: none;" onchange="processImageOCR(this)">
+            
+            <div class="ocr-btn-group">
+                <button type="button" class="ocr-upload-btn" onclick="document.getElementById('ocrInputCamera').click()">📷 Take Photo</button>
+                <button type="button" class="ocr-upload-btn" style="background-color: #475569;" onclick="document.getElementById('ocrInputGallery').click()">📁 Upload Image</button>
+            </div>
+
+            <div id="ocrStatus" class="ocr-status hidden">Processing image...</div>
+            
+            <div id="extractedContainer" class="hidden" style="margin-top: 0.8rem; text-align: left;">
+                <label style="font-size: 0.8rem; color: #475569;">Tap words to add to puzzle:</label>
+                <div id="extractedWordsList" class="extracted-words-wrapper"></div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Preset Themes:</label>
+            <div class="themes-wrapper">
+                <button type="button" class="theme-chip" onclick="loadTheme('CRICKET')">🏏 Cricket</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('ANIMALS')">🦁 Animals</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('TECH')">💻 Tech</button>
+                <button type="button" class="theme-chip" onclick="loadTheme('FOOD')">🍕 Food</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="wordInput">Or Enter Custom Words (Max 10):</label>
+            <textarea id="wordInput" placeholder="APPLE, BANANA, CHERRY, GRAPE" oninput="limitWords()"></textarea>
+            <div class="word-count-info" id="wordCount">Words: 0 / 10</div>
+        </div>
+
+        <button style="width: 100%;" onclick="generatePuzzle()">Generate Puzzle</button>
     </div>
 
-    <div id="ocrStatus" class="ocr-status hidden">Processing image...</div>
-    
-    <div id="extractedContainer" class="hidden" style="margin-top: 0.8rem; text-align: left;">
-        <label style="font-size: 0.8rem; color: #475569;">Tap words to add to puzzle:</label>
-        <div id="extractedWordsList" class="extracted-words-wrapper"></div>
+    <!-- Puzzle Display Section -->
+    <div id="puzzleArea" class="puzzle-area hidden">
+        <div class="puzzle-header">
+            <span id="timerDisplay">⏱️ Time: 00:00</span>
+            <span id="bestScoreDisplay">🏆 Best: --:--</span>
+        </div>
+
+        <div id="grid"></div>
+
+        <div class="action-btns">
+            <button class="submit-btn" onclick="submitSelection()">Submit Word</button>
+            <button class="cancel-btn" onclick="clearSelection()">Clear Selection</button>
+        </div>
+
+        <div class="word-list">
+            <h3>Words to Find:</h3>
+            <ul id="wordListDisplay"></ul>
+        </div>
+
+        <button class="secondary-btn" onclick="window.print()">🖨️ Print / Export PDF</button>
+        <button class="secondary-btn" onclick="resetToInput()">Create New Puzzle</button>
     </div>
 </div>
+
+<!-- Victory Modal -->
+<div id="victoryModal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2>🎉 Puzzle Completed!</h2>
+        <p id="victoryMessage" style="margin: 1rem 0; color: #475569;"></p>
+        <button onclick="closeModalAndReset()" style="width:100%;">Play Again</button>
+    </div>
+</div>
+
+<script>
+    let GRID_SIZE = 10;
+    let gridData = [];
+    let words = [];
+    let selectedPath = [];
+    let audioCtx = null;
+    
+    let timerInterval = null;
+    let secondsElapsed = 0;
+    let foundWordsCount = 0;
+
+    const PRESET_THEMES = {
+        CRICKET: ["BAT", "BALL", "WICKET", "UMPIRE", "SIXER", "BOUNDARY", "PITCH", "STUMPS", "CATCH", "BOWLER"],
+        ANIMALS: ["LION", "TIGER", "BEAR", "ZEBRA", "GIRAFFE", "ELEPHANT", "MONKEY", "RABBIT", "PANDA", "FOX"],
+        TECH: ["PYTHON", "SCRIPT", "DATA", "MOBILE", "DATABASE", "CODE", "SERVER", "SYSTEM", "CLOUD", "LOGIC"],
+        FOOD: ["PIZZA", "BURGER", "PASTA", "CHIPS", "SALAD", "BREAD", "CHEESE", "JUICE", "CAKE", "COOKIE"]
+    };
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSuccessSound() {
+        try {
+            initAudio();
+            const now = audioCtx.currentTime;
+            const osc1 = audioCtx.createOscillator(), gain1 = audioCtx.createGain();
+            osc1.type = 'sine'; osc1.frequency.setValueAtTime(659.25, now);
+            gain1.gain.setValueAtTime(0.2, now); gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+            osc1.connect(gain1); gain1.connect(audioCtx.destination);
+            osc1.start(now); osc1.stop(now + 0.25);
+
+            const osc2 = audioCtx.createOscillator(), gain2 = audioCtx.createGain();
+            osc2.type = 'sine'; osc2.frequency.setValueAtTime(880.00, now + 0.12);
+            gain2.gain.setValueAtTime(0.2, now + 0.12); gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+            osc2.connect(gain2); gain2.connect(audioCtx.destination);
+            osc2.start(now + 0.12); osc2.stop(now + 0.45);
+        } catch (e) { console.log(e); }
+    }
+
+    async function processImageOCR(inputEl) {
+        if (!inputEl.files || !inputEl.files[0]) return;
+        const file = inputEl.files[0];
+        
+        const statusEl = document.getElementById('ocrStatus');
+        const containerEl = document.getElementById('extractedContainer');
+        const listEl = document.getElementById('extractedWordsList');
+
+        statusEl.textContent = "⏳ Reading image text...";
+        statusEl.classList.remove('hidden');
+        containerEl.classList.add('hidden');
+        listEl.innerHTML = '';
+
+        try {
+            const worker = await Tesseract.createWorker('eng');
+            const ret = await worker.recognize(file);
+            await worker.terminate();
+
+            const extracted = ret.data.text
+                .toUpperCase()
+                .split(/[\s\n,.]+/)
+                .map(w => w.replace(/[^A-Z]/g, '').trim())
+                .filter(w => w.length >= 3);
+
+            const uniqueWords = [...new Set(extracted)];
+
+            if (uniqueWords.length === 0) {
+                statusEl.textContent = "⚠️ No clear words found in image. Try another photo.";
+                return;
+            }
+
+            statusEl.textContent = `✅ Extracted ${uniqueWords.length} words!`;
+
+            uniqueWords.forEach(word => {
+                const chip = document.createElement('button');
+                chip.type = "button";
+                chip.className = 'extracted-chip';
+                chip.textContent = `+ ${word}`;
+                chip.onclick = () => addExtractedWordToInput(word);
+                listEl.appendChild(chip);
+            });
+
+            containerEl.classList.remove('hidden');
+        } catch (err) {
+            console.error(err);
+            statusEl.textContent = "❌ Error processing image. Please try again.";
+        }
+    }
+
+    function addExtractedWordToInput(word) {
+        const textarea = document.getElementById('wordInput');
+        let parsed = getParsedWords(textarea.value);
+
+        if (parsed.length >= 10) {
+            alert("Maximum 10 words allowed.");
+            return;
+        }
+
+        if (!parsed.includes(word)) {
+            parsed.push(word);
+            textarea.value = parsed.join(', ');
+            limitWords();
+        }
+    }
+
+    function loadTheme(themeKey) {
+        const list = PRESET_THEMES[themeKey];
+        if (list) {
+            document.getElementById('wordInput').value = list.join(', ');
+            limitWords();
+        }
+    }
+
+    function getParsedWords(text) {
+        return text.toUpperCase().split(/[\n,]+/).map(w => w.trim().replace(/[^A-Z]/g, '')).filter(w => w.length > 0);
+    }
+
+    function limitWords() {
+        const textarea = document.getElementById('wordInput');
+        let parsed = getParsedWords(textarea.value);
+        if (parsed.length > 10) {
+            parsed = parsed.slice(0, 10);
+            textarea.value = parsed.join(', ');
+        }
+        document.getElementById('wordCount').textContent = `Words: ${parsed.length} / 10`;
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        secondsElapsed = 0;
+        updateTimerDisplay();
+        timerInterval = setInterval(() => {
+            secondsElapsed++;
+            updateTimerDisplay();
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+    }
+
+    function updateTimerDisplay() {
+        const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+        const secs = String(secondsElapsed % 60).padStart(2, '0');
+        document.getElementById('timerDisplay').textContent = `⏱️ Time: ${mins}:${secs}`;
+    }
+
+    function loadBestScore(diff) {
+        const best = localStorage.getItem(`wordsearch_best_${diff}`);
+        if (best) {
+            const mins = String(Math.floor(best / 60)).padStart(2, '0');
+            const secs = String(best % 60).padStart(2, '0');
+            document.getElementById('bestScoreDisplay').textContent = `🏆 Best: ${mins}:${secs}`;
+        } else {
+            document.getElementById('bestScoreDisplay').textContent = `🏆 Best: --:--`;
+        }
+    }
+
+    function saveBestScore(diff, timeSecs) {
+        const existing = localStorage.getItem(`wordsearch_best_${diff}`);
+        if (!existing || timeSecs < parseInt(existing)) {
+            localStorage.setItem(`wordsearch_best_${diff}`, timeSecs);
+        }
+    }
+
+    function generatePuzzle() {
+        initAudio();
+        const diff = document.getElementById('difficultySelect').value;
+        GRID_SIZE = diff === 'easy' ? 8 : (diff === 'medium' ? 10 : (diff === 'hard' ? 12 : 15));
+
+        const rawInput = document.getElementById('wordInput').value;
+        words = getParsedWords(rawInput).slice(0, 10);
+
+        if (words.length === 0) {
+            alert("Please enter at least one valid word or select a theme.");
+            return;
+        }
+
+        words.sort((a, b) => b.length - a.length);
+
+        let success = false, retries = 0;
+        while (!success && retries < 50) {
+            retries++;
+            initGrid();
+            let placedAll = true;
+            for (let word of words) {
+                if (!placeWord(word, diff)) {
+                    placedAll = false; break;
+                }
+            }
+            if (placedAll) success = true;
+        }
+
+        fillEmptyCells();
+        renderGrid();
+        renderWordList();
+
+        foundWordsCount = 0;
+        loadBestScore(diff);
+        startTimer();
+
+        document.getElementById('inputSection').classList.add('hidden');
+        document.getElementById('puzzleArea').classList.remove('hidden');
+    }
+
+    function resetToInput() {
+        stopTimer();
+        clearSelection();
+        document.getElementById('puzzleArea').classList.add('hidden');
+        document.getElementById('inputSection').classList.remove('hidden');
+    }
+
+    function initGrid() {
+        gridData = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(''));
+    }
+
+    function placeWord(word, diff) {
+        if (word.length > GRID_SIZE) return false;
+
+        let directions;
+
+        if (diff === 'super-hard') {
+            directions = [
+                [0, 1],   // Right
+                [1, 0],   // Down
+                [1, 1],   // Down-Right
+                [-1, 1],  // Up-Right
+                [0, -1],  // Left
+                [-1, 0],  // Up
+                [-1, -1], // Up-Left
+                [1, -1]   // Down-Left
+            ];
+        } else {
+            directions = [
+                [0, 1],   // Horizontal Right
+                [1, 0],   // Vertical Down
+                [1, 1],   // Diagonal Down-Right
+                [-1, 1]   // Diagonal Up-Right
+            ];
+        }
+
+        let attempts = 0;
+        while (attempts < 200) {
+            attempts++;
+            const dir = directions[Math.floor(Math.random() * directions.length)];
+            const row = Math.floor(Math.random() * GRID_SIZE);
+            const col = Math.floor(Math.random() * GRID_SIZE);
+
+            if (canPlace(word, row, col, dir)) {
+                for (let i = 0; i < word.length; i++) {
+                    gridData[row + i * dir[0]][col + i * dir[1]] = word[i];
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function canPlace(word, row, col, dir) {
+        for (let i = 0; i < word.length; i++) {
+            const r = row + i * dir[0], c = col + i * dir[1];
+            if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) return false;
+            if (gridData[r][c] !== '' && gridData[r][c] !== word[i]) return false;
+        }
+        return true;
+    }
+
+    function fillEmptyCells() {
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                if (gridData[r][c] === '') gridData[r][c] = letters[Math.floor(Math.random() * letters.length)];
+            }
+        }
+    }
+
+    function renderGrid() {
+        const gridEl = document.getElementById('grid');
+        gridEl.innerHTML = '';
+        gridEl.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 32px)`;
+
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.textContent = gridData[r][c];
+                cell.dataset.row = r;
+                cell.dataset.col = c;
+                cell.addEventListener('click', handleCellClick);
+                gridEl.appendChild(cell);
+            }
+        }
+    }
+
+    function handleCellClick(e) {
+        initAudio();
+        const target = e.target;
+        const row = parseInt(target.dataset.row), col = parseInt(target.dataset.col);
+
+        if (selectedPath.length > 0 && selectedPath[0].row === row && selectedPath[0].col === col) {
+            clearSelection(); return;
+        }
+
+        if (selectedPath.length > 1 && selectedPath[selectedPath.length - 1].row === row && selectedPath[selectedPath.length - 1].col === col) {
+            submitSelection(); return;
+        }
+
+        if (selectedPath.length === 0) {
+            selectedPath.push({ row, col, el: target });
+            target.classList.add('start-cell');
+        } else {
+            const lastCell = selectedPath[selectedPath.length - 1];
+            const dRow = Math.abs(row - lastCell.row), dCol = Math.abs(col - lastCell.col);
+
+            if (dRow <= 1 && dCol <= 1 && !(dRow === 0 && dCol === 0)) {
+                if (!selectedPath.some(p => p.row === row && p.col === col)) {
+                    selectedPath.push({ row, col, el: target });
+                    target.classList.add('selected');
+                }
+            }
+        }
+    }
+
+    function submitSelection() {
+        initAudio();
+        if (selectedPath.length === 0) return;
+
+        const selectedWord = selectedPath.map(p => gridData[p.row][p.col]).join('');
+        const reversedWord = selectedWord.split('').reverse().join('');
+
+        let matchedWord = null;
+        if (words.includes(selectedWord)) matchedWord = selectedWord;
+        else if (words.includes(reversedWord)) matchedWord = reversedWord;
+
+        if (matchedWord) {
+            playSuccessSound();
+            selectedPath.forEach(p => {
+                p.el.classList.remove('start-cell', 'selected');
+                p.el.classList.add('found');
+            });
+            markWordAsFound(matchedWord);
+            selectedPath = [];
+        } else {
+            selectedPath.forEach(p => {
+                if (!p.el.classList.contains('found')) p.el.style.backgroundColor = '#fca5a5';
+            });
+            setTimeout(() => {
+                selectedPath.forEach(p => {
+                    if (!p.el.classList.contains('found')) p.el.style.backgroundColor = '';
+                });
+                clearSelection();
+            }, 300);
+        }
+    }
+
+    function clearSelection() {
+        selectedPath.forEach(p => {
+            p.el.classList.remove('start-cell', 'selected');
+        });
+        selectedPath = [];
+    }
+
+    function renderWordList() {
+        const listEl = document.getElementById('wordListDisplay');
+        listEl.innerHTML = '';
+        words.forEach(word => {
+            const li = document.createElement('li');
+            li.className = 'word-item';
+            li.id = `word-${word}`;
+            li.textContent = word;
+            listEl.appendChild(li);
+        });
+    }
+
+    function markWordAsFound(word) {
+        const wordEl = document.getElementById(`word-${word}`);
+        if (wordEl && !wordEl.classList.contains('found-word')) {
+            wordEl.classList.add('found-word');
+            foundWordsCount++;
+
+            if (foundWordsCount === words.length) {
+                handleVictory();
+            }
+        }
+    }
+
+    function handleVictory() {
+        stopTimer();
+        const diff = document.getElementById('difficultySelect').value;
+        saveBestScore(diff, secondsElapsed);
+
+        const mins = Math.floor(secondsElapsed / 60);
+        const secs = secondsElapsed % 60;
+        
+        document.getElementById('victoryMessage').textContent = 
+            `You found all ${words.length} words in ${mins > 0 ? mins + 'm ' : ''}${secs}s!`;
+        
+        document.getElementById('victoryModal').classList.remove('hidden');
+
+        if (typeof confetti === 'function') {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+    }
+
+    function closeModalAndReset() {
+        document.getElementById('victoryModal').classList.add('hidden');
+        resetToInput();
+    }
+</script>
+
+</body>
+</html>
