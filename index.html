@@ -245,9 +245,10 @@
         <div class="form-group">
             <label for="difficultySelect">Select Difficulty Grid:</label>
             <select id="difficultySelect">
-                <option value="easy">Easy (8x8 Grid - Horiz/Vert Only)</option>
-                <option value="medium" selected>Medium (10x10 Grid - All Directions)</option>
-                <option value="hard">Hard (12x12 Grid - All Directions)</option>
+                <option value="easy">Easy (8x8 Grid - Forward & L-to-R Diagonals)</option>
+                <option value="medium" selected>Medium (10x10 Grid - Forward & L-to-R Diagonals)</option>
+                <option value="hard">Hard (12x12 Grid - Forward & L-to-R Diagonals)</option>
+                <option value="super-hard">Super Hard (15x15 Grid - All 8 Directions)</option>
             </select>
         </div>
 
@@ -407,7 +408,7 @@
     function generatePuzzle() {
         initAudio();
         const diff = document.getElementById('difficultySelect').value;
-        GRID_SIZE = diff === 'easy' ? 8 : (diff === 'hard' ? 12 : 10);
+        GRID_SIZE = diff === 'easy' ? 8 : (diff === 'medium' ? 10 : (diff === 'hard' ? 12 : 15));
 
         const rawInput = document.getElementById('wordInput').value;
         words = getParsedWords(rawInput).slice(0, 10);
@@ -458,13 +459,27 @@
     function placeWord(word, diff) {
         if (word.length > GRID_SIZE) return false;
 
-        let directions = [
-            [0, 1], [1, 0], [1, 1], [-1, 1],
-            [0, -1], [-1, 0], [-1, -1], [1, -1]
-        ];
+        let directions;
 
-        if (diff === 'easy') {
-            directions = [[0, 1], [1, 0]];
+        if (diff === 'super-hard') {
+            directions = [
+                [0, 1],   // Right
+                [1, 0],   // Down
+                [1, 1],   // Down-Right
+                [-1, 1],  // Up-Right
+                [0, -1],  // Left
+                [-1, 0],  // Up
+                [-1, -1], // Up-Left
+                [1, -1]   // Down-Left
+            ];
+        } else {
+            // Easy, Medium, Hard: Right, Down, Down-Right (L-to-R), Up-Right (L-to-R)
+            directions = [
+                [0, 1],   // Horizontal Right
+                [1, 0],   // Vertical Down
+                [1, 1],   // Diagonal Down-Right
+                [-1, 1]   // Diagonal Up-Right
+            ];
         }
 
         let attempts = 0;
