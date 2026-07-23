@@ -6,8 +6,8 @@
     <title>Word Search Puzzle Maker</title>
     <!-- Canvas Confetti Library -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Tesseract.js OCR Library -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <!-- Tesseract.js OCR Library v5 -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root {
             --primary: #4f46e5;
@@ -310,7 +310,6 @@
         <div class="ocr-section">
             <label>📷 Scan Words from Photo / Image:</label>
             
-            <!-- Hidden File Inputs with direct Inline Style Prevention -->
             <input type="file" id="ocrInputGallery" accept="image/*" style="display: none;" onchange="processImageOCR(this)">
             <input type="file" id="ocrInputCamera" accept="image/*" capture="environment" style="display: none;" onchange="processImageOCR(this)">
             
@@ -420,6 +419,7 @@
         } catch (e) { console.log(e); }
     }
 
+    // Fixed Direct OCR Recognition logic
     async function processImageOCR(inputEl) {
         if (!inputEl.files || !inputEl.files[0]) return;
         const file = inputEl.files[0];
@@ -428,17 +428,16 @@
         const containerEl = document.getElementById('extractedContainer');
         const listEl = document.getElementById('extractedWordsList');
 
-        statusEl.textContent = "⏳ Reading image text...";
+        statusEl.textContent = "⏳ Processing image text...";
         statusEl.classList.remove('hidden');
         containerEl.classList.add('hidden');
         listEl.innerHTML = '';
 
         try {
-            const worker = await Tesseract.createWorker('eng');
-            const ret = await worker.recognize(file);
-            await worker.terminate();
-
-            const extracted = ret.data.text
+            // Direct call eliminates worker cross-origin issues
+            const result = await Tesseract.recognize(file, 'eng');
+            
+            const extracted = result.data.text
                 .toUpperCase()
                 .split(/[\s\n,.]+/)
                 .map(w => w.replace(/[^A-Z]/g, '').trim())
@@ -464,8 +463,10 @@
 
             containerEl.classList.remove('hidden');
         } catch (err) {
-            console.error(err);
+            console.error("OCR Exception:", err);
             statusEl.textContent = "❌ Error processing image. Please try again.";
+        } finally {
+            inputEl.value = ''; // Reset input so same file can be scanned again
         }
     }
 
