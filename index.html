@@ -48,25 +48,51 @@
             padding: 1.5rem;
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
 
         .app-header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 0.6rem;
+            justify-content: space-between;
             margin-bottom: 1.2rem;
         }
 
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             color: var(--primary);
         }
 
         .logo-icon {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             flex-shrink: 0;
+        }
+
+        .icon-btn {
+            background: #e0e7ff;
+            color: var(--primary);
+            border: none;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: background 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: #c7d2fe;
         }
 
         .hidden {
@@ -182,7 +208,7 @@
             text-align: right;
         }
 
-        button {
+        button.primary-action {
             background-color: var(--primary);
             color: white;
             border: none;
@@ -192,9 +218,10 @@
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
+            width: 100%;
         }
 
-        button:hover {
+        button.primary-action:hover {
             background-color: var(--primary-hover);
         }
 
@@ -205,13 +232,19 @@
             margin-top: 0.5rem;
         }
 
-        .submit-btn { background-color: #16a34a; flex: 1; }
+        .submit-btn { background-color: #16a34a; flex: 1; color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
         .submit-btn:hover { background-color: #15803d; }
-        .cancel-btn { background-color: #dc2626; flex: 1; }
+        .cancel-btn { background-color: #dc2626; flex: 1; color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
         .cancel-btn:hover { background-color: #b91c1c; }
 
         .secondary-btn {
             background-color: #64748b;
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
             margin-top: 0.5rem;
             width: 100%;
         }
@@ -305,15 +338,49 @@
             padding: 1.5rem;
             border-radius: 12px;
             text-align: center;
-            max-width: 350px;
+            max-width: 380px;
             width: 100%;
         }
-        .modal-card h2 { color: #16a34a; margin-bottom: 0.5rem; }
+        .modal-card h2 { color: var(--primary); margin-bottom: 0.8rem; font-size: 1.3rem; }
+
+        .settings-options {
+            text-align: left;
+            margin: 1rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .setting-radio-card {
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 0.8rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .setting-radio-card:hover, .setting-radio-card.active {
+            border-color: var(--primary);
+            background: #f5f3ff;
+        }
+
+        .setting-radio-card input {
+            margin-top: 0.2rem;
+        }
+
+        .setting-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 0.2rem;
+        }
 
         @media print {
             body { background: white; padding: 0; }
             .container { box-shadow: none; padding: 0; max-width: 100%; }
-            .action-btns, .secondary-btn, .input-section, #timerDisplay, button { display: none !important; }
+            .action-btns, .secondary-btn, .input-section, #timerDisplay, button, .icon-btn { display: none !important; }
             #grid { border: 2px solid #000; }
             .cell { border: 1px solid #ddd; color: black !important; background: white !important; }
             .word-item.found-word { text-decoration: none; background: transparent; }
@@ -325,14 +392,19 @@
 <div class="container">
     <!-- Camera-Lens Grid Header -->
     <div class="app-header">
-        <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="10" y="10" width="80" height="80" rx="18" fill="#4F46E5"/>
-            <path d="M36 22V78M64 22V78M22 36H78M22 64H78" stroke="#818CF8" stroke-width="3" stroke-linecap="round"/>
-            <circle cx="50" cy="50" r="26" stroke="#FFFFFF" stroke-width="4.5" stroke-dasharray="7 4"/>
-            <line x1="32" y1="32" x2="68" y2="68" stroke="#4ADE80" stroke-width="8" stroke-linecap="round"/>
-            <circle cx="50" cy="50" r="3.5" fill="#FFFFFF"/>
-        </svg>
-        <h1>Word Search Studio</h1>
+        <div class="header-title-group">
+            <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10" y="10" width="80" height="80" rx="18" fill="#4F46E5"/>
+                <path d="M36 22V78M64 22V78M22 36H78M22 64H78" stroke="#818CF8" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="50" cy="50" r="26" stroke="#FFFFFF" stroke-width="4.5" stroke-dasharray="7 4"/>
+                <line x1="32" y1="32" x2="68" y2="68" stroke="#4ADE80" stroke-width="8" stroke-linecap="round"/>
+                <circle cx="50" cy="50" r="3.5" fill="#FFFFFF"/>
+            </svg>
+            <h1>Word Search Studio</h1>
+        </div>
+
+        <!-- Settings Button -->
+        <button class="icon-btn" onclick="openSettingsModal()" title="Audio Settings">🎵</button>
     </div>
     
     <!-- Input Section -->
@@ -395,7 +467,7 @@
             <div class="word-count-info" id="wordCount">Words: 0 / 10</div>
         </div>
 
-        <button style="width: 100%;" onclick="generatePuzzle()">Generate Puzzle</button>
+        <button class="primary-action" onclick="generatePuzzle()">Generate Puzzle</button>
     </div>
 
     <!-- Puzzle Display Section -->
@@ -422,12 +494,40 @@
     </div>
 </div>
 
+<!-- Audio Settings Modal -->
+<div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h2>🎵 Audio Voice Settings</h2>
+        <p style="font-size: 0.85rem; color: #475569;">Select how letters are spoken when tapped:</p>
+
+        <div class="settings-options">
+            <label class="setting-radio-card" id="cardAlphabet" onclick="setAudioMode('alphabet')">
+                <input type="radio" name="audioMode" value="alphabet" id="radioAlphabet">
+                <div>
+                    <strong>🔤 Alphabet Mode</strong>
+                    <div class="setting-desc">Recites letter names ("A", "B", "C"). Great for spelling practice.</div>
+                </div>
+            </label>
+
+            <label class="setting-radio-card" id="cardPhonics" onclick="setAudioMode('phonics')">
+                <input type="radio" name="audioMode" value="phonics" id="radioPhonics">
+                <div>
+                    <strong>🗣️ Phonics Mode</strong>
+                    <div class="setting-desc">Recites phonetic sounds ("Ah", "Buh", "Kuh"). Perfect for early readers.</div>
+                </div>
+            </label>
+        </div>
+
+        <button class="primary-action" onclick="closeSettingsModal()">Save & Close</button>
+    </div>
+</div>
+
 <!-- Victory Modal -->
 <div id="victoryModal" class="modal-overlay hidden">
     <div class="modal-card">
         <h2>🎉 Puzzle Completed!</h2>
         <p id="victoryMessage" style="margin: 1rem 0; color: #475569;"></p>
-        <button onclick="closeModalAndReset()" style="width:100%;">Play Again</button>
+        <button class="primary-action" onclick="closeModalAndReset()">Play Again</button>
     </div>
 </div>
 
@@ -441,6 +541,18 @@
     let timerInterval = null;
     let secondsElapsed = 0;
     let foundWordsCount = 0;
+
+    // Audio Mode state: 'alphabet' or 'phonics'
+    let audioMode = localStorage.getItem('wordsearch_audio_mode') || 'alphabet';
+
+    // Phonics phonetic sounds for SpeechSynthesis
+    const PHONICS_MAP = {
+        'A': 'ah', 'B': 'buh', 'C': 'kuh', 'D': 'duh', 'E': 'eh',
+        'F': 'fuh', 'G': 'guh', 'H': 'huh', 'I': 'ih', 'J': 'juh',
+        'K': 'kuh', 'L': 'luh', 'M': 'muh', 'N': 'nuh', 'O': 'aw',
+        'P': 'puh', 'Q': 'kwuh', 'R': 'ruh', 'S': 'suh', 'T': 'tuh',
+        'U': 'uh', 'V': 'vuh', 'W': 'wuh', 'X': 'ks', 'Y': 'yuh', 'Z': 'zuh'
+    };
 
     // Curated pools of accurate, recognizable words per theme
     const THEME_POOLS = {
@@ -481,10 +593,43 @@
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 1.0;
+            utterance.rate = 0.9;
             utterance.pitch = 1.1;
             utterance.lang = 'en-US';
             window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function speakLetter(letter) {
+        letter = letter.toUpperCase();
+        if (audioMode === 'phonics' && PHONICS_MAP[letter]) {
+            speakText(PHONICS_MAP[letter]);
+        } else {
+            speakText(letter);
+        }
+    }
+
+    function openSettingsModal() {
+        setAudioMode(audioMode, false);
+        document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+        document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    function setAudioMode(mode, triggerTest = true) {
+        audioMode = mode;
+        localStorage.setItem('wordsearch_audio_mode', mode);
+
+        document.getElementById('radioAlphabet').checked = (mode === 'alphabet');
+        document.getElementById('radioPhonics').checked = (mode === 'phonics');
+
+        document.getElementById('cardAlphabet').classList.toggle('active', mode === 'alphabet');
+        document.getElementById('cardPhonics').classList.toggle('active', mode === 'phonics');
+
+        if (triggerTest) {
+            speakLetter('A');
         }
     }
 
@@ -731,7 +876,6 @@
         stopTimer();
         clearSelection();
 
-        // Clear custom words input & count display
         const wordInput = document.getElementById('wordInput');
         if (wordInput) wordInput.value = '';
         const wordCount = document.getElementById('wordCount');
@@ -832,7 +976,7 @@
         if (selectedPath.length === 0) {
             selectedPath.push({ row, col, el: target });
             target.classList.add('start-cell');
-            speakText(letter);
+            speakLetter(letter);
             return;
         }
 
@@ -850,7 +994,7 @@
             if (Math.abs(dRow) <= 1 && Math.abs(dCol) <= 1 && !(dRow === 0 && dCol === 0)) {
                 selectedPath.push({ row, col, el: target });
                 target.classList.add('selected');
-                speakText(letter);
+                speakLetter(letter);
             }
             return;
         }
@@ -865,7 +1009,7 @@
         if (row === nextExpectedRow && col === nextExpectedCol) {
             selectedPath.push({ row, col, el: target });
             target.classList.add('selected');
-            speakText(letter);
+            speakLetter(letter);
         }
     }
 
