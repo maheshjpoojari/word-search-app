@@ -513,7 +513,7 @@
                 <input type="radio" name="audioMode" value="phonics" id="radioPhonics">
                 <div>
                     <strong>🗣️ Phonics Mode</strong>
-                    <div class="setting-desc">Recites phonetic sounds ("Ah", "Buh", "Kuh"). Perfect for early readers.</div>
+                    <div class="setting-desc">Recites phonics word-anchors ("Apple", "Egg", "Hat"). Perfect for early readers.</div>
                 </div>
             </label>
         </div>
@@ -544,13 +544,34 @@
 
     let audioMode = localStorage.getItem('wordsearch_audio_mode') || 'alphabet';
 
-    // Optimized Phonics Phonetic Mapping
-    const PHONICS_MAP = {
-        'A': 'ah', 'B': 'buh', 'C': 'kuh', 'D': 'duh', 'E': 'ehh',
-        'F': 'ff', 'G': 'guh', 'H': 'hha', 'I': 'ih', 'J': 'juh',
-        'K': 'kuh', 'L': 'll', 'M': 'mm', 'N': 'nn', 'O': 'aw',
-        'P': 'puh', 'Q': 'kwuh', 'R': 'err', 'S': 'ss', 'T': 'tuh',
-        'U': 'uh', 'V': 'vuh', 'W': 'wuh', 'X': 'eks', 'Y': 'yuh', 'Z': 'zz'
+    // Phonic Word Anchors ensure speech engines never default back to letter names
+    const PHONICS_ANCHORS = {
+        'A': 'apple',    // Short 'a' sound
+        'B': 'ball',     // 'b' sound
+        'C': 'cat',      // 'k' sound
+        'D': 'dog',      // 'd' sound
+        'E': 'egg',      // Guarantees short 'e' sound (prevents saying 'E')
+        'F': 'fish',     // 'f' sound
+        'G': 'goat',     // 'g' sound
+        'H': 'hat',      // Guarantees breathy 'h' sound (prevents saying 'aitch')
+        'I': 'igloo',    // Short 'i' sound
+        'J': 'jug',      // 'j' sound
+        'K': 'kite',     // 'k' sound
+        'L': 'lion',     // 'l' sound
+        'M': 'mat',      // 'm' sound
+        'N': 'net',      // 'n' sound
+        'O': 'octopus',  // Short 'o' sound
+        'P': 'pen',      // 'p' sound
+        'Q': 'queen',    // 'kw' sound
+        'R': 'rat',      // 'r' sound
+        'S': 'sun',      // 's' sound
+        'T': 'top',      // 't' sound
+        'U': 'umbrella', // Short 'u' sound
+        'V': 'van',      // 'v' sound
+        'W': 'web',      // 'w' sound
+        'X': 'fox',      // 'ks' sound
+        'Y': 'yak',      // 'y' sound
+        'Z': 'zebra'     // 'z' sound
     };
 
     const THEME_POOLS = {
@@ -600,17 +621,23 @@
 
     function speakLetter(letter) {
         letter = letter.toUpperCase();
-        if (audioMode === 'phonics' && PHONICS_MAP[letter]) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(PHONICS_MAP[letter]);
-                utterance.rate = 0.8;
-                utterance.pitch = 1.0;
-                utterance.lang = 'en-US';
-                window.speechSynthesis.speak(utterance);
-            }
+        if (!('speechSynthesis' in window)) return;
+
+        window.speechSynthesis.cancel();
+
+        if (audioMode === 'phonics') {
+            const spokenWord = PHONICS_ANCHORS[letter] || letter;
+            const utterance = new SpeechSynthesisUtterance(spokenWord);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.1;
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
         } else {
-            speakText(letter);
+            const utterance = new SpeechSynthesisUtterance(letter);
+            utterance.rate = 0.9;
+            utterance.pitch = 1.1;
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
         }
     }
 
