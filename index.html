@@ -506,14 +506,11 @@
         } catch (e) { console.log(e); }
     }
 
-    // Dynamic random selection from accurate curated pools
     function loadDynamicTheme(themeKey) {
         const pool = THEME_POOLS[themeKey];
         if (!pool) return;
 
-        // Shuffle pool
         const shuffled = [...pool].sort(() => 0.5 - Math.random());
-        // Select 10 words
         const selected = shuffled.slice(0, 10);
 
         document.getElementById('wordInput').value = selected.join(', ');
@@ -733,6 +730,13 @@
     function resetToInput() {
         stopTimer();
         clearSelection();
+
+        // Clear custom words input & count display
+        const wordInput = document.getElementById('wordInput');
+        if (wordInput) wordInput.value = '';
+        const wordCount = document.getElementById('wordCount');
+        if (wordCount) wordCount.textContent = 'Words: 0 / 10';
+
         document.getElementById('puzzleArea').classList.add('hidden');
         document.getElementById('inputSection').classList.remove('hidden');
     }
