@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Word Search Studio</title>
+
+    <!-- App Favicon & Mobile Touch Icons -->
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="apple-touch-icon.png">
+
     <!-- Canvas Confetti Library -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <!-- Tesseract.js OCR Library v5 -->
@@ -471,6 +477,18 @@
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
+    // Read single letter or word aloud for learning
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Stop prior speech instantly for snappy response
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.1; // Slightly friendly tone for children
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
     function playSuccessSound() {
         try {
             initAudio();
@@ -800,10 +818,12 @@
         const target = e.target;
         const row = parseInt(target.dataset.row);
         const col = parseInt(target.dataset.col);
+        const letter = gridData[row][col];
 
         if (selectedPath.length === 0) {
             selectedPath.push({ row, col, el: target });
             target.classList.add('start-cell');
+            speakText(letter); // Speak first letter
             return;
         }
 
@@ -821,6 +841,7 @@
             if (Math.abs(dRow) <= 1 && Math.abs(dCol) <= 1 && !(dRow === 0 && dCol === 0)) {
                 selectedPath.push({ row, col, el: target });
                 target.classList.add('selected');
+                speakText(letter); // Speak second letter
             }
             return;
         }
@@ -835,6 +856,7 @@
         if (row === nextExpectedRow && col === nextExpectedCol) {
             selectedPath.push({ row, col, el: target });
             target.classList.add('selected');
+            speakText(letter); // Speak subsequent letter
         }
     }
 
@@ -861,6 +883,11 @@
             });
             markWordAsFound(matchedWord);
             selectedPath = [];
+
+            // Read the complete word aloud after a short delay
+            setTimeout(() => {
+                speakText(matchedWord);
+            }, 300);
         } else {
             selectedPath.forEach(p => {
                 if (!p.el.classList.contains('found')) p.el.style.backgroundColor = '#fca5a5';
@@ -889,6 +916,11 @@
             li.className = 'word-item';
             li.id = `word-${word}`;
             li.textContent = word;
+            
+            // Allow clicking word chips to hear the whole word pronounced anytime
+            li.style.cursor = 'pointer';
+            li.onclick = () => speakText(word);
+
             listEl.appendChild(li);
         });
     }
