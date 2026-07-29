@@ -512,8 +512,8 @@
             <label class="setting-radio-card" id="cardPhonics" onclick="setAudioMode('phonics')">
                 <input type="radio" name="audioMode" value="phonics" id="radioPhonics">
                 <div>
-                    <strong>🗣️ Phonics Mode (Pure Sound Clips)</strong>
-                    <div class="setting-desc">Plays pure isolated phonic sounds ("a", "e", "h"). Perfect for early readers.</div>
+                    <strong>🗣️ Phonics Mode</strong>
+                    <div class="setting-desc">Recites isolated phonic sounds ("ah", "buh", "kuh"). Perfect for early readers.</div>
                 </div>
             </label>
         </div>
@@ -537,7 +537,7 @@
     let words = [];
     let selectedPath = [];
     let audioCtx = null;
-    let activeAudio = null;
+    let selectedFemaleVoice = null;
     
     let timerInterval = null;
     let secondsElapsed = 0;
@@ -545,46 +545,55 @@
 
     let audioMode = localStorage.getItem('wordsearch_audio_mode') || 'alphabet';
 
-    // Direct MP3 phonics clips for pure isolated sounds (A-Z)
-    const PHONICS_AUDIO = {
-        'A': 'https://upload.wikimedia.org/wikipedia/commons/2/22/Open_front_unrounded_vowel.ogg',
-        'B': 'https://upload.wikimedia.org/wikipedia/commons/1/18/Voiced_bilabial_plosive.ogg',
-        'C': 'https://upload.wikimedia.org/wikipedia/commons/e/e3/Voiceless_velar_plosive.ogg',
-        'D': 'https://upload.wikimedia.org/wikipedia/commons/0/01/Voiced_alveolar_plosive.ogg',
-        'E': 'https://upload.wikimedia.org/wikipedia/commons/0/0f/Open-mid_front_unrounded_vowel.ogg', // Pure "eh" sound
-        'F': 'https://upload.wikimedia.org/wikipedia/commons/1/1f/Voiceless_labiodental_fricative.ogg',
-        'G': 'https://upload.wikimedia.org/wikipedia/commons/3/30/Voiced_velar_plosive.ogg',
-        'H': 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Voiceless_glottal_fricative.ogg',  // Pure "hh" breath sound
-        'I': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Near-close_near-front_unrounded_vowel.ogg',
-        'J': 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Voiced_postalveolar_affricate.ogg',
-        'K': 'https://upload.wikimedia.org/wikipedia/commons/e/e3/Voiceless_velar_plosive.ogg',
-        'L': 'https://upload.wikimedia.org/wikipedia/commons/a/bc/Alveolar_lateral_approximant.ogg',
-        'M': 'https://upload.wikimedia.org/wikipedia/commons/9/91/Bilabial_nasal.ogg',
-        'N': 'https://upload.wikimedia.org/wikipedia/commons/2/29/Alveolar_nasal.ogg',
-        'O': 'https://upload.wikimedia.org/wikipedia/commons/8/87/Open_back_unrounded_vowel.ogg',
-        'P': 'https://upload.wikimedia.org/wikipedia/commons/5/51/Voiceless_bilabial_plosive.ogg',
-        'Q': 'https://upload.wikimedia.org/wikipedia/commons/e/e3/Voiceless_velar_plosive.ogg',
-        'R': 'https://upload.wikimedia.org/wikipedia/commons/3/38/Alveolar_approximant.ogg',
-        'S': 'https://upload.wikimedia.org/wikipedia/commons/a/ac/Voiceless_alveolar_sibilant.ogg',
-        'T': 'https://upload.wikimedia.org/wikipedia/commons/0/02/Voiceless_alveolar_plosive.ogg',
-        'U': 'https://upload.wikimedia.org/wikipedia/commons/2/23/Open-mid_back_unrounded_vowel.ogg',
-        'V': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Voiced_labiodental_fricative.ogg',
-        'W': 'https://upload.wikimedia.org/wikipedia/commons/f/f2/Voiced_labial-velar_approximant.ogg',
-        'X': 'https://upload.wikimedia.org/wikipedia/commons/a/ac/Voiceless_alveolar_sibilant.ogg',
-        'Y': 'https://upload.wikimedia.org/wikipedia/commons/d/d8/Palatal_approximant.ogg',
-        'Z': 'https://upload.wikimedia.org/wikipedia/commons/c/c0/Voiced_alveolar_sibilant.ogg'
+    // Pure isolated phonics sound representations
+    const PHONICS_MAP = {
+        'A': 'ah',
+        'B': 'buh',
+        'C': 'kuh',
+        'D': 'duh',
+        'E': 'eh',
+        'F': 'fuh',
+        'G': 'guh',
+        'H': 'huh',
+        'I': 'ih',
+        'J': 'juh',
+        'K': 'kuh',
+        'L': 'luh',
+        'M': 'muh',
+        'N': 'nuh',
+        'O': 'oh',
+        'P': 'puh',
+        'Q': 'kwuh',
+        'R': 'ruh',
+        'S': 'suh',
+        'T': 'tuh',
+        'U': 'uh',
+        'V': 'vuh',
+        'W': 'wuh',
+        'X': 'ks',
+        'Y': 'yuh',
+        'Z': 'zuh'
     };
 
-    // Preload phonics clips for instant zero-lag playback
-    const preloadedAudioCache = {};
-    function preloadPhonicsAudio() {
-        Object.keys(PHONICS_AUDIO).forEach(letter => {
-            const audio = new Audio();
-            audio.src = PHONICS_AUDIO[letter];
-            preloadedAudioCache[letter] = audio;
-        });
+    // Auto-detect and lock to a natural Female voice across all devices
+    function initVoices() {
+        if (!('speechSynthesis' in window)) return;
+        
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices || voices.length === 0) return;
+
+        // Preferred female voice names across Windows, Android, Mac & iOS
+        const femaleVoiceNames = ['zira', 'samantha', 'victoria', 'karen', 'google us english', 'female', 'natural'];
+        
+        selectedFemaleVoice = voices.find(v => 
+            v.lang.startsWith('en') && femaleVoiceNames.some(name => v.name.toLowerCase().includes(name))
+        ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
     }
-    preloadPhonicsAudio();
+
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = initVoices;
+        initVoices();
+    }
 
     const THEME_POOLS = {
         CRICKET: ["BAT", "BALL", "WICKET", "UMPIRE", "SIXER", "BOUNDARY", "PITCH", "STUMPS", "CATCH", "BOWLER", "PADS", "HELMET", "GLOVES", "RUNOUT", "SPINNER", "PACS", "INNINGS", "OVER", "SEAMER", "KEEPER"],
@@ -618,38 +627,34 @@
     function initAudio() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (!selectedFemaleVoice) initVoices();
     }
 
-    function speakText(text) {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 0.9;
-            utterance.pitch = 1.1;
-            utterance.lang = 'en-US';
-            window.speechSynthesis.speak(utterance);
-        }
+    function speakText(text, rate = 0.9) {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        if (selectedFemaleVoice) utterance.voice = selectedFemaleVoice;
+        utterance.rate = rate;
+        utterance.pitch = 1.2; // Slightly higher pitch forces crisp female tone
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
     }
 
     function speakLetter(letter) {
         letter = letter.toUpperCase();
+        if (!('speechSynthesis' in window)) return;
 
-        if (audioMode === 'phonics' && PHONICS_AUDIO[letter]) {
-            // Stop any playing speech or previous clip
-            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-            if (activeAudio) {
-                activeAudio.pause();
-                activeAudio.currentTime = 0;
-            }
+        window.speechSynthesis.cancel();
 
-            // Play preloaded pure audio clip
-            const clip = preloadedAudioCache[letter] || new Audio(PHONICS_AUDIO[letter]);
-            clip.currentTime = 0;
-            clip.play().catch(e => console.log("Audio clip play blocked:", e));
-            activeAudio = clip;
+        if (audioMode === 'phonics') {
+            // Speak isolated phonetic sound using female voice at fast rate
+            const phonicsSound = PHONICS_MAP[letter] || letter.toLowerCase();
+            speakText(phonicsSound, 1.2);
         } else {
-            // Standard Alphabet Speech Mode
-            speakText(letter);
+            // Standard Alphabet Mode ("A", "B", "C")
+            speakText(letter, 0.9);
         }
     }
 
