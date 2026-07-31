@@ -513,7 +513,7 @@
                 <input type="radio" name="audioMode" value="phonics" id="radioPhonics">
                 <div>
                     <strong>🗣️ Phonics Mode</strong>
-                    <div class="setting-desc">Recites isolated phonic sounds ("ah", "buh", "kuh"). Perfect for early readers.</div>
+                    <div class="setting-desc">Recites true phonic sounds based on standard UK teaching ("a", "b", "c").</div>
                 </div>
             </label>
         </div>
@@ -545,49 +545,49 @@
 
     let audioMode = localStorage.getItem('wordsearch_audio_mode') || 'alphabet';
 
-    // Pure isolated phonics sound representations
+    // Pure Phonics mapped to clean TTS spellings matching the Miss Phonics reference video
     const PHONICS_MAP = {
         'A': 'ah',
-        'B': 'buh',
-        'C': 'kuh',
-        'D': 'duh',
+        'B': 'b',
+        'C': 'k',
+        'D': 'd',
         'E': 'eh',
-        'F': 'fuh',
-        'G': 'guh',
-        'H': 'huh',
+        'F': 'ff',
+        'G': 'g',
+        'H': 'h',
         'I': 'ih',
-        'J': 'juh',
-        'K': 'kuh',
-        'L': 'luh',
-        'M': 'muh',
-        'N': 'nuh',
-        'O': 'oh',
-        'P': 'puh',
-        'Q': 'kwuh',
-        'R': 'ruh',
-        'S': 'suh',
-        'T': 'tuh',
+        'J': 'j',
+        'K': 'k',
+        'L': 'll',
+        'M': 'mm',
+        'N': 'nn',
+        'O': 'o',
+        'P': 'p',
+        'Q': 'qu',
+        'R': 'rr',
+        'S': 'ss',
+        'T': 't',
         'U': 'uh',
-        'V': 'vuh',
-        'W': 'wuh',
+        'V': 'vv',
+        'W': 'w',
         'X': 'ks',
-        'Y': 'yuh',
-        'Z': 'zuh'
+        'Y': 'y',
+        'Z': 'zz'
     };
 
-    // Auto-detect and lock to a natural Female voice across all devices
+    // Auto-detect a crisp UK/US Female voice (e.g. Miss Phonics style)
     function initVoices() {
         if (!('speechSynthesis' in window)) return;
         
         const voices = window.speechSynthesis.getVoices();
         if (!voices || voices.length === 0) return;
 
-        // Preferred female voice names across Windows, Android, Mac & iOS
-        const femaleVoiceNames = ['zira', 'samantha', 'victoria', 'karen', 'google us english', 'female', 'natural'];
+        // Priorities: British female voice -> US female voice -> Any English female voice
+        const femaleVoiceKeywords = ['hazel', 'samantha', 'victoria', 'karen', 'zira', 'google uk english female', 'female', 'natural'];
         
         selectedFemaleVoice = voices.find(v => 
-            v.lang.startsWith('en') && femaleVoiceNames.some(name => v.name.toLowerCase().includes(name))
-        ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+            v.lang.startsWith('en') && femaleVoiceKeywords.some(key => v.name.toLowerCase().includes(key))
+        ) || voices.find(v => v.lang.startsWith('en-GB') || v.lang.startsWith('en-US')) || voices[0];
     }
 
     if ('speechSynthesis' in window) {
@@ -637,8 +637,8 @@
         const utterance = new SpeechSynthesisUtterance(text);
         if (selectedFemaleVoice) utterance.voice = selectedFemaleVoice;
         utterance.rate = rate;
-        utterance.pitch = 1.2; // Slightly higher pitch forces crisp female tone
-        utterance.lang = 'en-US';
+        utterance.pitch = 1.1;
+        utterance.lang = 'en-GB';
         window.speechSynthesis.speak(utterance);
     }
 
@@ -649,11 +649,9 @@
         window.speechSynthesis.cancel();
 
         if (audioMode === 'phonics') {
-            // Speak isolated phonetic sound using female voice at fast rate
             const phonicsSound = PHONICS_MAP[letter] || letter.toLowerCase();
             speakText(phonicsSound, 1.2);
         } else {
-            // Standard Alphabet Mode ("A", "B", "C")
             speakText(letter, 0.9);
         }
     }
