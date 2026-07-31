@@ -390,7 +390,7 @@
 <body>
 
 <div class="container">
-    <!-- Camera-Lens Grid Header -->
+    <!-- App Header -->
     <div class="app-header">
         <div class="header-title-group">
             <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -513,7 +513,7 @@
                 <input type="radio" name="audioMode" value="phonics" id="radioPhonics">
                 <div>
                     <strong>🗣️ Phonics Mode</strong>
-                    <div class="setting-desc">Recites true phonic sounds based on standard UK teaching ("a", "b", "c").</div>
+                    <div class="setting-desc">Recites Letter Name + Phonic Sound (e.g. "B... buh", "S... sss").</div>
                 </div>
             </label>
         </div>
@@ -543,46 +543,45 @@
     let secondsElapsed = 0;
     let foundWordsCount = 0;
 
-    let audioMode = localStorage.getItem('wordsearch_audio_mode') || 'alphabet';
+    let audioMode = localStorage.getItem('wordsearch_audio_mode') || 'phonics';
 
-    // Pure Phonics mapped to clean TTS spellings matching the Miss Phonics reference video
-    const PHONICS_MAP = {
-        'A': 'ah',
-        'B': 'b',
-        'C': 'k',
-        'D': 'd',
-        'E': 'eh',
-        'F': 'ff',
-        'G': 'g',
-        'H': 'h',
-        'I': 'ih',
-        'J': 'j',
-        'K': 'k',
-        'L': 'll',
-        'M': 'mm',
-        'N': 'nn',
-        'O': 'o',
-        'P': 'p',
-        'Q': 'qu',
-        'R': 'rr',
-        'S': 'ss',
-        'T': 't',
-        'U': 'uh',
-        'V': 'vv',
-        'W': 'w',
-        'X': 'ks',
-        'Y': 'y',
-        'Z': 'zz'
+    // Letter Name + Phonic Sound Mapping
+    const PHONICS_SOUNDS = {
+        'A': 'A, ah',
+        'B': 'B, buh',
+        'C': 'C, kuh',
+        'D': 'D, duh',
+        'E': 'E, eh',
+        'F': 'F, fff',
+        'G': 'G, guh',
+        'H': 'H, huh',
+        'I': 'I, ih',
+        'J': 'J, juh',
+        'K': 'K, kuh',
+        'L': 'L, lll',
+        'M': 'M, mmm',
+        'N': 'N, nnn',
+        'O': 'O, off',
+        'P': 'P, puh',
+        'Q': 'Q, kwuh',
+        'R': 'R, rrr',
+        'S': 'S, sss',
+        'T': 'T, tuh',
+        'U': 'U, uh',
+        'V': 'V, vvv',
+        'W': 'W, wuh',
+        'X': 'X, ks',
+        'Y': 'Y, yuh',
+        'Z': 'Z, zzz'
     };
 
-    // Auto-detect a crisp UK/US Female voice (e.g. Miss Phonics style)
+    // Auto-detect a crisp UK/US Female voice for Web Speech engine
     function initVoices() {
         if (!('speechSynthesis' in window)) return;
         
         const voices = window.speechSynthesis.getVoices();
         if (!voices || voices.length === 0) return;
 
-        // Priorities: British female voice -> US female voice -> Any English female voice
         const femaleVoiceKeywords = ['hazel', 'samantha', 'victoria', 'karen', 'zira', 'google uk english female', 'female', 'natural'];
         
         selectedFemaleVoice = voices.find(v => 
@@ -644,13 +643,10 @@
 
     function speakLetter(letter) {
         letter = letter.toUpperCase();
-        if (!('speechSynthesis' in window)) return;
-
-        window.speechSynthesis.cancel();
 
         if (audioMode === 'phonics') {
-            const phonicsSound = PHONICS_MAP[letter] || letter.toLowerCase();
-            speakText(phonicsSound, 1.2);
+            const soundPhrase = PHONICS_SOUNDS[letter] || letter;
+            speakText(soundPhrase, 0.85);
         } else {
             speakText(letter, 0.9);
         }
