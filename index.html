@@ -513,7 +513,7 @@
                 <input type="radio" name="audioMode" value="phonics" id="radioPhonics">
                 <div>
                     <strong>🗣️ Phonics Mode</strong>
-                    <div class="setting-desc">Recites Letter Name + Phonic Sound (e.g. "B... buh", "S... sss").</div>
+                    <div class="setting-desc">Recites pure isolated phonic sounds (e.g. "buh", "sss", "tuh").</div>
                 </div>
             </label>
         </div>
@@ -545,34 +545,34 @@
 
     let audioMode = localStorage.getItem('wordsearch_audio_mode') || 'phonics';
 
-    // Letter Name + Phonic Sound Mapping
+    // Pure Phonic Sounds Mapping (No Letter Names)
     const PHONICS_SOUNDS = {
-        'A': 'A, ah',
-        'B': 'B, buh',
-        'C': 'C, kuh',
-        'D': 'D, duh',
-        'E': 'E, eh',
-        'F': 'F, fff',
-        'G': 'G, guh',
-        'H': 'H, huh',
-        'I': 'iih',
-        'J': 'J, juh',
-        'K': 'K, kuh',
-        'L': 'L, lll',
-        'M': 'M, mmm',
-        'N': 'N, nnn',
-        'O': 'O, off',
-        'P': 'P, puh',
-        'Q': 'Q, kwuh',
-        'R': 'R, rrr',
-        'S': 'S, sss',
-        'T': 'T, tuh',
-        'U': 'U, uh',
-        'V': 'V, vvv',
-        'W': 'W, wuh',
-        'X': 'X, ks',
-        'Y': 'Y, yuh',
-        'Z': 'Z, zzz'
+        'A': 'ah',
+        'B': 'buh',
+        'C': 'kuh',
+        'D': 'duh',
+        'E': 'eh',
+        'F': 'fff',
+        'G': 'guh',
+        'H': 'huh',
+        'I': 'ih',
+        'J': 'juh',
+        'K': 'kuh',
+        'L': 'lll',
+        'M': 'mmm',
+        'N': 'nnn',
+        'O': 'off',
+        'P': 'puh',
+        'Q': 'kwuh',
+        'R': 'rrr',
+        'S': 'sss',
+        'T': 'tuh',
+        'U': 'uh',
+        'V': 'vvv',
+        'W': 'wuh',
+        'X': 'ks',
+        'Y': 'yuh',
+        'Z': 'zzz'
     };
 
     // Auto-detect a crisp UK/US Female voice for Web Speech engine
@@ -645,8 +645,8 @@
         letter = letter.toUpperCase();
 
         if (audioMode === 'phonics') {
-            const soundPhrase = PHONICS_SOUNDS[letter] || letter;
-            speakText(soundPhrase, 0.85);
+            const pureSound = PHONICS_SOUNDS[letter] || letter;
+            speakText(pureSound, 0.85);
         } else {
             speakText(letter, 0.9);
         }
