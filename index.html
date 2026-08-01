@@ -1,1159 +1,476 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Search Studio</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word Search Studio</title>
+  <style>
+    :root {
+      --primary: #5c5be5;
+      --primary-hover: #4a49cc;
+      --bg-color: #f4f5fa;
+      --card-bg: #ffffff;
+      --text-main: #2d3142;
+      --text-muted: #6c757d;
+      --tag-bg: #e0e4fc;
+      --tag-text: #4c4ebd;
+    }
 
-    <!-- App Favicon & Mobile Touch Icons -->
-    <link rel="icon" type="image/svg+xml" href="logo.svg">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="apple-touch-icon.png">
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    <!-- Canvas Confetti Library -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Tesseract.js OCR Library v5 -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <style>
-        :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #0f172a;
-            --border: #e2e8f0;
-            --highlight: #fef08a;
-            --start-cell: #93c5fd;
-        }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
+    .app-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 30px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
 
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            padding: 1rem;
-            display: flex;
-            justify-content: center;
-        }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
 
-        .container {
-            width: 100%;
-            max-width: 600px;
-            background: var(--card-bg);
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            position: relative;
-        }
+    .logo-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-        .app-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.2rem;
-        }
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
 
-        .header-title-group {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary);
+    }
 
-        h1 {
-            font-size: 1.4rem;
-            color: var(--primary);
-        }
+    .audio-settings-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: background 0.2s;
+    }
 
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            flex-shrink: 0;
-        }
+    .audio-settings-btn:hover {
+      background: #cbd5e1;
+    }
 
-        .icon-btn {
-            background: #e0e7ff;
-            color: var(--primary);
-            border: none;
-            padding: 0.5rem;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: background 0.2s;
-        }
+    .form-group {
+      margin-bottom: 20px;
+    }
 
-        .icon-btn:hover {
-            background: #c7d2fe;
-        }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
 
-        .hidden {
-            display: none !important;
-        }
+    select, textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      background: #f8fafc;
+    }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
+    .ocr-box {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 20px;
+      background: #fafafa;
+    }
 
-        label {
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
+    .ocr-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
 
-        select, textarea {
-            width: 100%;
-            padding: 0.6rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 1rem;
-        }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
 
-        textarea {
-            height: 80px;
-            resize: none;
-        }
+    .btn-secondary {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      background: #2b82c9;
+      color: white;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-        .themes-wrapper, .extracted-words-wrapper {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
-            margin-bottom: 0.5rem;
-        }
+    .btn-secondary.dark {
+      background: #475569;
+    }
 
-        .theme-chip {
-            background: #e0e7ff;
-            color: var(--primary);
-            padding: 0.3rem 0.7rem;
-            border-radius: 16px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s;
-        }
+    .themes-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
 
-        .theme-chip:hover {
-            background: #c7d2fe;
-        }
+    .theme-tag {
+      padding: 6px 12px;
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.1s;
+    }
 
-        .extracted-chip {
-            background: #f1f5f9;
-            color: #334155;
-            padding: 0.3rem 0.6rem;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: 1px solid #cbd5e1;
-        }
+    .theme-tag:hover {
+      transform: scale(1.03);
+    }
 
-        .extracted-chip:hover {
-            background: #bbf7d0;
-            border-color: #86efac;
-        }
+    .word-count {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
 
-        .ocr-section {
-            background: #f8fafc;
-            border: 2px dashed #cbd5e1;
-            padding: 0.8rem;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 1rem;
-        }
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
 
-        .ocr-btn-group {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            margin-top: 0.5rem;
-            flex-wrap: wrap;
-        }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
 
-        .ocr-upload-btn {
-            background-color: #0284c7;
-            color: white;
-            font-size: 0.85rem;
-            padding: 0.5rem 0.8rem;
-            border-radius: 6px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
 
-        .ocr-upload-btn:hover {
-            background-color: #0369a1;
-        }
+    .modal-overlay.active {
+      display: flex;
+    }
 
-        .ocr-status {
-            font-size: 0.85rem;
-            color: #0284c7;
-            font-weight: 600;
-            margin-top: 0.5rem;
-        }
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
 
-        .word-count-info {
-            font-size: 0.85rem;
-            color: #64748b;
-            text-align: right;
-        }
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
 
-        button.primary-action {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.75rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            width: 100%;
-        }
+    .modal-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
 
-        button.primary-action:hover {
-            background-color: var(--primary-hover);
-        }
+    .option-card {
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
 
-        .action-btns {
-            display: flex;
-            gap: 0.5rem;
-            width: 100%;
-            margin-top: 0.5rem;
-        }
+    .option-card.selected {
+      border-color: var(--primary);
+      background: #f0f0fe;
+    }
 
-        .submit-btn { background-color: #16a34a; flex: 1; color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
-        .submit-btn:hover { background-color: #15803d; }
-        .cancel-btn { background-color: #dc2626; flex: 1; color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
-        .cancel-btn:hover { background-color: #b91c1c; }
+    .option-title {
+      font-weight: 700;
+      font-size: 14px;
+    }
 
-        .secondary-btn {
-            background-color: #64748b;
-            color: white;
-            border: none;
-            padding: 0.75rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 0.5rem;
-            width: 100%;
-        }
+    .option-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
 
-        .puzzle-header {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            font-weight: 600;
-            font-size: 0.95rem;
-            background: #f1f5f9;
-            padding: 0.5rem 0.8rem;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-        }
+    /* Puzzle Container View */
+    .grid-container {
+      display: none;
+      margin-top: 20px;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+    }
 
-        .puzzle-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-        }
+    .tile {
+      aspect-ratio: 1;
+      background: #f1f5f9;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
 
-        #grid {
-            display: grid;
-            gap: 2px;
-            background-color: var(--border);
-            border: 2px solid var(--border);
-            border-radius: 6px;
-            user-select: none;
-        }
-
-        .cell {
-            width: 32px;
-            height: 32px;
-            background-color: var(--card-bg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 1rem;
-            text-transform: uppercase;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .cell.found { 
-            background-color: #bbf7d0 !important; 
-            color: #166534 !important;
-        }
-        .cell.start-cell { background-color: #93c5fd !important; color: #000 !important; }
-        .cell.selected { background-color: #fef08a !important; color: #000 !important; }
-
-        .cell.found.start-cell {
-            background-color: #60a5fa !important;
-            color: #ffffff !important;
-        }
-        .cell.found.selected {
-            background-color: #facc15 !important;
-            color: #000000 !important;
-        }
-
-        .word-list { width: 100%; }
-        .word-list h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-        .word-list ul { display: flex; flex-wrap: wrap; gap: 0.5rem; list-style: none; }
-        .word-item {
-            padding: 0.4rem 0.8rem;
-            background: #f1f5f9;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-        .word-item.found-word {
-            text-decoration: line-through;
-            background-color: #bbf7d0;
-            color: #166534;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            z-index: 100;
-        }
-        .modal-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            text-align: center;
-            max-width: 380px;
-            width: 100%;
-        }
-        .modal-card h2 { color: var(--primary); margin-bottom: 0.8rem; font-size: 1.3rem; }
-
-        .settings-options {
-            text-align: left;
-            margin: 1rem 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-
-        .setting-radio-card {
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            padding: 0.8rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .setting-radio-card:hover, .setting-radio-card.active {
-            border-color: var(--primary);
-            background: #f5f3ff;
-        }
-
-        .setting-radio-card input {
-            margin-top: 0.2rem;
-        }
-
-        .setting-desc {
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-top: 0.2rem;
-        }
-
-        @media print {
-            body { background: white; padding: 0; }
-            .container { box-shadow: none; padding: 0; max-width: 100%; }
-            .action-btns, .secondary-btn, .input-section, #timerDisplay, button, .icon-btn { display: none !important; }
-            #grid { border: 2px solid #000; }
-            .cell { border: 1px solid #ddd; color: black !important; background: white !important; }
-            .word-item.found-word { text-decoration: none; background: transparent; }
-        }
-    </style>
+    .tile.active {
+      background: var(--primary);
+      color: white;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- App Header -->
-    <div class="app-header">
-        <div class="header-title-group">
-            <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="10" y="10" width="80" height="80" rx="18" fill="#4F46E5"/>
-                <path d="M36 22V78M64 22V78M22 36H78M22 64H78" stroke="#818CF8" stroke-width="3" stroke-linecap="round"/>
-                <circle cx="50" cy="50" r="26" stroke="#FFFFFF" stroke-width="4.5" stroke-dasharray="7 4"/>
-                <line x1="32" y1="32" x2="68" y2="68" stroke="#4ADE80" stroke-width="8" stroke-linecap="round"/>
-                <circle cx="50" cy="50" r="3.5" fill="#FFFFFF"/>
-            </svg>
-            <h1>Word Search Studio</h1>
-        </div>
-
-        <!-- Settings Button -->
-        <button class="icon-btn" onclick="openSettingsModal()" title="Audio Settings">🎵</button>
-    </div>
-    
-    <!-- Input Section -->
-    <div id="inputSection">
-        <div class="form-group">
-            <label for="difficultySelect">Select Level:</label>
-            <select id="difficultySelect">
-                <option value="easy">Easy (Forward & L-to-R Diagonals)</option>
-                <option value="medium" selected>Medium (Forward & L-to-R Diagonals)</option>
-                <option value="hard">Hard (Forward & L-to-R Diagonals)</option>
-                <option value="super-hard">Super Hard (All 8 Directions)</option>
-            </select>
-        </div>
-
-        <!-- OCR Scan Section -->
-        <div class="ocr-section">
-            <label>📷 Scan Words from Photo / Image:</label>
-            
-            <input type="file" id="ocrInputGallery" accept="image/*" style="display: none;" onchange="processImageOCR(this)">
-            <input type="file" id="ocrInputCamera" accept="image/*" capture="environment" style="display: none;" onchange="processImageOCR(this)">
-            
-            <div class="ocr-btn-group">
-                <button type="button" class="ocr-upload-btn" onclick="document.getElementById('ocrInputCamera').click()">📷 Take Photo</button>
-                <button type="button" class="ocr-upload-btn" style="background-color: #475569;" onclick="document.getElementById('ocrInputGallery').click()">📁 Upload Image</button>
-            </div>
-
-            <div id="ocrStatus" class="ocr-status hidden">Processing image...</div>
-            
-            <div id="extractedContainer" class="hidden" style="margin-top: 0.8rem; text-align: left;">
-                <label style="font-size: 0.8rem; color: #475569;">Tap words to add to puzzle:</label>
-                <div id="extractedWordsList" class="extracted-words-wrapper"></div>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Themes (Tap to generate fresh words):</label>
-            <div class="themes-wrapper">
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('CRICKET')">🏏 Cricket</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('INDIAN_CITIES')">🇮🇳 Indian Cities</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('WORLD_CITIES')">🌍 World Cities</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('MONUMENTS')">🏛️ Monuments</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('MOBILES')">📱 Mobiles</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('VEGETABLES')">🥦 Vegetables</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('ANIMALS')">🦁 Animals</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('TECH')">💻 Tech</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('FOOD')">🍕 Food</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('CARS')">🚗 Cars</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('VEHICLES')">🚜 Vehicles</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('SPACE')">🪐 Space</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('FLOWERS')">🌸 Flowers</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('FRUITS')">🍎 Fruits</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('BODY_PARTS')">🧠 Body Parts</button>
-                <button type="button" class="theme-chip" onclick="loadDynamicTheme('DRESSES')">👗 Dresses</button>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="wordInput">Or Enter Custom Words (Max 10):</label>
-            <textarea id="wordInput" placeholder="APPLE, BANANA, CHERRY, GRAPE" oninput="limitWords()"></textarea>
-            <div class="word-count-info" id="wordCount">Words: 0 / 10</div>
-        </div>
-
-        <button class="primary-action" onclick="generatePuzzle()">Generate Puzzle</button>
+  <div class="app-card">
+    <div class="header">
+      <div class="logo-title">
+        <div class="logo-icon">#</div>
+        <div class="title">Word Search Studio</div>
+      </div>
+      <button class="audio-settings-btn" onclick="openModal()" title="Audio Settings">🎵</button>
     </div>
 
-    <!-- Puzzle Display Section -->
-    <div id="puzzleArea" class="puzzle-area hidden">
-        <div class="puzzle-header">
-            <span id="timerDisplay">⏱️ Time: 00:00</span>
-            <span id="bestScoreDisplay">🏆 Best: --:--</span>
+    <!-- Main Setup Form -->
+    <div id="setupView">
+      <div class="form-group">
+        <label>Select Level:</label>
+        <select>
+          <option>Medium (Forward & L-to-R Diagonals)</option>
+          <option>Easy (Horizontal & Vertical)</option>
+          <option>Hard (All Directions)</option>
+        </select>
+      </div>
+
+      <div class="ocr-box">
+        <div class="ocr-title">📷 Scan Words from Photo / Image:</div>
+        <div class="btn-group">
+          <button class="btn-secondary">📷 Take Photo</button>
+          <button class="btn-secondary dark">📁 Upload Image</button>
         </div>
+      </div>
 
-        <div id="grid"></div>
-
-        <div class="action-btns">
-            <button class="submit-btn" onclick="submitSelection()">Submit Word</button>
-            <button class="cancel-btn" onclick="clearSelection()">Clear Selection</button>
+      <div class="form-group">
+        <label>Themes (Tap to generate fresh words):</label>
+        <div class="themes-wrapper">
+          <button class="theme-tag">🏏 Cricket</button>
+          <button class="theme-tag">🇮🇳 Indian Cities</button>
+          <button class="theme-tag">🌍 World Cities</button>
+          <button class="theme-tag">🏛️ Monuments</button>
+          <button class="theme-tag">📱 Mobiles</button>
+          <button class="theme-tag">🥦 Vegetables</button>
+          <button class="theme-tag">🦁 Animals</button>
+          <button class="theme-tag">🖥️ Tech</button>
+          <button class="theme-tag">🍕 Food</button>
+          <button class="theme-tag">🚗 Cars</button>
+          <button class="theme-tag">🚜 Vehicles</button>
+          <button class="theme-tag">🪐 Space</button>
+          <button class="theme-tag">🌺 Flowers</button>
+          <button class="theme-tag">🍎 Fruits</button>
+          <button class="theme-tag">🧠 Body Parts</button>
+          <button class="theme-tag">👗 Dresses</button>
         </div>
+      </div>
 
-        <div class="word-list">
-            <h3>Words to Find:</h3>
-            <ul id="wordListDisplay"></ul>
-        </div>
+      <div class="form-group">
+        <label>Or Enter Custom Words (Max 10):</label>
+        <textarea id="wordInput" rows="3" placeholder="APPLE, BANANA, CHERRY, GRAPE"></textarea>
+        <div class="word-count">Words: 0 / 10</div>
+      </div>
 
-        <button class="secondary-btn" onclick="window.print()">🖨️ Print / Export PDF</button>
-        <button class="secondary-btn" onclick="resetToInput()">Create New Puzzle</button>
+      <button class="btn-primary" onclick="generatePuzzle()">Generate Puzzle</button>
     </div>
-</div>
 
-<!-- Audio Settings Modal -->
-<div id="settingsModal" class="modal-overlay hidden">
-    <div class="modal-card">
-        <h2>🎵 Audio Voice Settings</h2>
-        <p style="font-size: 0.85rem; color: #475569;">Select how letters are spoken when tapped:</p>
+    <!-- Interactive Grid View -->
+    <div id="gridView" style="display: none;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Tap tiles to practice phonics!</h3>
+        <button onclick="backToSetup()" style="padding: 6px 12px; cursor:pointer;">← Back</button>
+      </div>
+      <div class="grid-container" id="grid"></div>
+    </div>
+  </div>
 
-        <div class="settings-options">
-            <label class="setting-radio-card" id="cardAlphabet" onclick="setAudioMode('alphabet')">
-                <input type="radio" name="audioMode" value="alphabet" id="radioAlphabet">
-                <div>
-                    <strong>🔤 Alphabet Mode</strong>
-                    <div class="setting-desc">Recites letter names ("A", "B", "C"). Great for spelling practice.</div>
-                </div>
-            </label>
+  <!-- Audio Voice Settings Modal -->
+  <div class="modal-overlay" id="audioModal">
+    <div class="modal-content">
+      <div class="modal-title">🎵 Audio Voice Settings</div>
+      <div class="modal-subtitle">Select how letters are spoken when tapped:</div>
 
-            <label class="setting-radio-card" id="cardPhonics" onclick="setAudioMode('phonics')">
-                <input type="radio" name="audioMode" value="phonics" id="radioPhonics">
-                <div>
-                    <strong>🗣️ Phonics Mode</strong>
-                    <div class="setting-desc">Recites pure isolated phonic sounds (e.g. "buh", "sss", "tuh").</div>
-                </div>
-            </label>
+      <div class="option-card" id="optAlphabet" onclick="selectAudioMode('alphabet')">
+        <input type="radio" name="audioMode" value="alphabet" id="radioAlpha">
+        <div>
+          <div class="option-title">🔤 Alphabet Mode</div>
+          <div class="option-desc">Recites letter names ("A", "B", "C"). Great for spelling practice.</div>
         </div>
+      </div>
 
-        <button class="primary-action" onclick="closeSettingsModal()">Save & Close</button>
+      <div class="option-card selected" id="optPhonics" onclick="selectAudioMode('phonics')">
+        <input type="radio" name="audioMode" value="phonics" id="radioPhonics" checked>
+        <div>
+          <div class="option-title">🗣️ Phonics Mode</div>
+          <div class="option-desc">Recites pure isolated phonic sounds (e.g. "buh", "sss", "tuh").</div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="closeModal()">Save & Close</button>
     </div>
-</div>
+  </div>
 
-<!-- Victory Modal -->
-<div id="victoryModal" class="modal-overlay hidden">
-    <div class="modal-card">
-        <h2>🎉 Puzzle Completed!</h2>
-        <p id="victoryMessage" style="margin: 1rem 0; color: #475569;"></p>
-        <button class="primary-action" onclick="closeModalAndReset()">Play Again</button>
-    </div>
-</div>
+  <script>
+    // System Audio State
+    let currentAudioMode = 'phonics';
+    let currentAudioInstance = null;
 
-<script>
-    let GRID_SIZE = 10;
-    let gridData = [];
-    let words = [];
-    let selectedPath = [];
-    let audioCtx = null;
-    let selectedFemaleVoice = null;
-    
-    let timerInterval = null;
-    let secondsElapsed = 0;
-    let foundWordsCount = 0;
-
-    let audioMode = localStorage.getItem('wordsearch_audio_mode') || 'phonics';
-
-    // Pure Phonic Sounds Mapping (No Letter Names)
-    const PHONICS_SOUNDS = {
-        'A': 'aah',
-        'B': 'buh',
-        'C': 'kuh',
-        'D': 'duh',
-        'E': 'eeh',
-        'F': 'fff',
-        'G': 'guh',
-        'H': 'huh',
-        'I': 'iih',
-        'J': 'juh',
-        'K': 'kkh',
-        'L': 'lll',
-        'M': 'mmm',
-        'N': 'nnn',
-        'O': 'off',
-        'P': 'puh',
-        'Q': 'kwuh',
-        'R': 'rrr',
-        'S': 'sss',
-        'T': 'tuh',
-        'U': 'uuh',
-        'V': 'vvv',
-        'W': 'wuh',
-        'X': 'kss',
-        'Y': 'yuh',
-        'Z': 'zzz'
-    };
-
-    // Auto-detect a crisp UK/US Female voice for Web Speech engine
-    function initVoices() {
-        if (!('speechSynthesis' in window)) return;
-        
-        const voices = window.speechSynthesis.getVoices();
-        if (!voices || voices.length === 0) return;
-
-        const femaleVoiceKeywords = ['hazel', 'samantha', 'victoria', 'karen', 'zira', 'google uk english female', 'female', 'natural'];
-        
-        selectedFemaleVoice = voices.find(v => 
-            v.lang.startsWith('en') && femaleVoiceKeywords.some(key => v.name.toLowerCase().includes(key))
-        ) || voices.find(v => v.lang.startsWith('en-GB') || v.lang.startsWith('en-US')) || voices[0];
+    // Modal Control
+    function openModal() {
+      document.getElementById('audioModal').classList.add('active');
     }
 
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = initVoices;
-        initVoices();
+    function closeModal() {
+      document.getElementById('audioModal').classList.remove('active');
     }
 
-    const THEME_POOLS = {
-        CRICKET: ["BAT", "BALL", "WICKET", "UMPIRE", "SIXER", "BOUNDARY", "PITCH", "STUMPS", "CATCH", "BOWLER", "PADS", "HELMET", "GLOVES", "RUNOUT", "SPINNER", "PACS", "INNINGS", "OVER", "SEAMER", "KEEPER"],
-        INDIAN_CITIES: ["MUMBAI", "DELHI", "BANGALORE", "JAIPUR", "CHENNAI", "KOLKATA", "HYDERABAD", "PUNE", "AGRA", "VARANASI", "SURAT", "LUCKNOW", "INDORE", "NAGPUR", "PATNA", "THANE", "BHOPAL", "COCHIN"],
-        WORLD_CITIES: ["PARIS", "LONDON", "TOKYO", "SYDNEY", "DUBAI", "ROME", "NEWYORK", "TORONTO", "BERLIN", "MADRID", "SEOUL", "CAIRO", "CHICAGO", "BANGKOK", "MOSCOW", "VIENNA", "BEIJING"],
-        MONUMENTS: ["TAJMAHAL", "CHARMINAR", "GATEWAY", "REDFORT", "QUTUB", "COLOSSEUM", "PYRAMIDS", "BIGBEN", "PETRA", "PISA", "EIFFEL", "HAMPI", "KONARK", "SPHINX", "AJANTA"],
-        MOBILES: ["IPHONE", "SAMSUNG", "ONEPLUS", "PIXEL", "XIAOMI", "MOTOROLA", "REALME", "VIVO", "OPPO", "NOKIA", "APPLE", "ASUS", "NOTHING", "HONOR", "SONY"],
-        VEGETABLES: ["CARROT", "POTATO", "TOMATO", "ONION", "BROCCOLI", "SPINACH", "GARLIC", "GINGER", "RADISH", "BEETROOT", "CORN", "PEAS", "PUMPKIN", "CABBAGE"],
-        ANIMALS: ["LION", "TIGER", "BEAR", "ZEBRA", "GIRAFFE", "ELEPHANT", "MONKEY", "RABBIT", "PANDA", "FOX", "CHEETAH", "HYENA", "RACCOON", "LEOPARD", "WOLF", "DEER"],
-        TECH: ["PYTHON", "SCRIPT", "DATA", "MOBILE", "DATABASE", "CODE", "SERVER", "SYSTEM", "CLOUD", "LOGIC", "HTML", "JAVA", "ROBOT", "NETWORK", "ALGORITHM", "WEB"],
-        FOOD: ["PIZZA", "BURGER", "PASTA", "CHIPS", "SALAD", "BREAD", "CHEESE", "JUICE", "CAKE", "COOKIE", "NACHOS", "TACO", "SOUP", "DONUT", "RICE", "WAFERS"],
-        CARS: ["BMW", "AUDI", "HONDA", "TOYOTA", "FORD", "TESLA", "NISSAN", "MAZDA", "HYUNDAI", "JAGUAR", "VOLVO", "PORSCHE", "SUZUKI", "FERRARI", "MERCEDES"],
-        VEHICLES: ["TRUCK", "TRAIN", "PLANE", "SCOOTER", "TRACTOR", "BICYCLE", "SUBWAY", "BUS", "ROCKET", "BOAT", "METRO", "TAXI", "SHIP", "GLIDER"],
-        SPACE: ["SUN", "EARTH", "MARS", "JUPITER", "SATURN", "NEPTUNE", "PLUTO", "VENUS", "COMET", "MOON", "GALAXY", "ORBIT", "STAR", "METEOR", "ASTEROID"],
-        FLOWERS: ["ROSE", "LILY", "LOTUS", "TULIP", "DAISY", "ORCHID", "JASMINE", "VIOLET", "POPPY", "SUNFLOWER", "IRIS", "HIBISCUS", "DAFFODIL"],
-        FRUITS: ["APPLE", "BANANA", "MANGO", "ORANGE", "GRAPE", "CHERRY", "MELON", "PAPAYA", "PEACH", "GUAVA", "KIWI", "PLUM", "LEMON", "FIG"],
-        BODY_PARTS: ["BRAIN", "HEART", "LUNGS", "ELBOW", "FINGER", "KNEE", "THROAT", "KIDNEY", "ANKLE", "SPINE", "WRIST", "SHOULDER", "THUMB", "TOE"],
-        DRESSES: ["SHIRT", "FROCK", "SKIRT", "JACKET", "SWEATER", "SAREE", "KIMONO", "GOWN", "SUIT", "BLAZER", "PANTS", "SHORTS", "HOODIE", "VEST"]
-    };
-
-    const STOP_WORDS = new Set(["THE", "AND", "FOR", "WAS", "ARE", "YOU", "HIS", "HER", "SHE", "HIM", "NOT", "BUT", "HAD", "HAS", "OUT", "WHO", "GET", "MAN", "THIS", "THAT", "WITH", "HAVE", "THEY", "SAID", "FROM"]);
-
-    const COMMON_FUSED_WORDS = {
-        "HEGREW": ["GREW"],
-        "SQUEAKTHEY": ["SQUEAK", "THEY"],
-        "MOUSEYOU": ["MOUSE", "YOU"],
-        "CANTDOIT": ["CANT", "DOIT"],
-        "DOIT": ["DOIT"]
-    };
-
-    function initAudio() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        if (!selectedFemaleVoice) initVoices();
+    function selectAudioMode(mode) {
+      currentAudioMode = mode;
+      document.getElementById('optAlphabet').classList.toggle('selected', mode === 'alphabet');
+      document.getElementById('optPhonics').classList.toggle('selected', mode === 'phonics');
+      document.getElementById('radioAlpha').checked = (mode === 'alphabet');
+      document.getElementById('radioPhonics').checked = (mode === 'phonics');
     }
 
-    function speakText(text, rate = 0.9) {
-        if (!('speechSynthesis' in window)) return;
+    /**
+     * Core Audio Dispatcher
+     */
+    function speakLetter(letter) {
+      if (currentAudioMode === 'phonics') {
+        // Stop any currently playing audio
+        if (currentAudioInstance) {
+          currentAudioInstance.pause();
+          currentAudioInstance.currentTime = 0;
+        }
+
+        // Play the uploaded UK female phonics.wav asset
+        currentAudioInstance = new Audio('phonics.wav');
+        currentAudioInstance.play().catch(err => {
+          console.warn("Phonics playback issue:", err);
+        });
+
+      } else {
+        // Native Speech Synthesis for Alphabet Names
         window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        if (selectedFemaleVoice) utterance.voice = selectedFemaleVoice;
-        utterance.rate = rate;
-        utterance.pitch = 1.1;
+        const utterance = new SpeechSynthesisUtterance(letter);
         utterance.lang = 'en-GB';
         window.speechSynthesis.speak(utterance);
+      }
     }
 
-    function speakLetter(letter) {
-        letter = letter.toUpperCase();
-
-        if (audioMode === 'phonics') {
-            const pureSound = PHONICS_SOUNDS[letter] || letter;
-            speakText(pureSound, 0.85);
-        } else {
-            speakText(letter, 0.9);
-        }
-    }
-
-    function openSettingsModal() {
-        setAudioMode(audioMode, false);
-        document.getElementById('settingsModal').classList.remove('hidden');
-    }
-
-    function closeSettingsModal() {
-        document.getElementById('settingsModal').classList.add('hidden');
-    }
-
-    function setAudioMode(mode, triggerTest = true) {
-        audioMode = mode;
-        localStorage.setItem('wordsearch_audio_mode', mode);
-
-        document.getElementById('radioAlphabet').checked = (mode === 'alphabet');
-        document.getElementById('radioPhonics').checked = (mode === 'phonics');
-
-        document.getElementById('cardAlphabet').classList.toggle('active', mode === 'alphabet');
-        document.getElementById('cardPhonics').classList.toggle('active', mode === 'phonics');
-
-        if (triggerTest) {
-            speakLetter('E');
-        }
-    }
-
-    function playSuccessSound() {
-        try {
-            initAudio();
-            const now = audioCtx.currentTime;
-            const osc1 = audioCtx.createOscillator(), gain1 = audioCtx.createGain();
-            osc1.type = 'sine'; osc1.frequency.setValueAtTime(659.25, now);
-            gain1.gain.setValueAtTime(0.2, now); gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-            osc1.connect(gain1); gain1.connect(audioCtx.destination);
-            osc1.start(now); osc1.stop(now + 0.25);
-
-            const osc2 = audioCtx.createOscillator(), gain2 = audioCtx.createGain();
-            osc2.type = 'sine'; osc2.frequency.setValueAtTime(880.00, now + 0.12);
-            gain2.gain.setValueAtTime(0.2, now + 0.12); gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-            osc2.connect(gain2); gain2.connect(audioCtx.destination);
-            osc2.start(now + 0.12); osc2.stop(now + 0.45);
-        } catch (e) { console.log(e); }
-    }
-
-    function loadDynamicTheme(themeKey) {
-        const pool = THEME_POOLS[themeKey];
-        if (!pool) return;
-
-        const shuffled = [...pool].sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, 10);
-
-        document.getElementById('wordInput').value = selected.join(', ');
-        limitWords();
-    }
-
-    async function processImageOCR(inputEl) {
-        if (!inputEl.files || !inputEl.files[0]) return;
-        const file = inputEl.files[0];
-        
-        const statusEl = document.getElementById('ocrStatus');
-        const containerEl = document.getElementById('extractedContainer');
-        const listEl = document.getElementById('extractedWordsList');
-
-        statusEl.textContent = "⏳ Processing image...";
-        statusEl.classList.remove('hidden');
-        containerEl.classList.add('hidden');
-        listEl.innerHTML = '';
-
-        try {
-            const processedImage = await preprocessImage(file);
-            const result = await Tesseract.recognize(processedImage, 'eng');
-
-            let rawWords = result.data.words
-                .filter(w => w.confidence > 60)
-                .map(w => w.text.toUpperCase().replace(/[^A-Z]/g, '').trim());
-
-            let cleanTokens = [];
-
-            rawWords.forEach(w => {
-                if (COMMON_FUSED_WORDS[w]) {
-                    cleanTokens.push(...COMMON_FUSED_WORDS[w]);
-                } else if (w.length >= 3) {
-                    cleanTokens.push(w);
-                }
-            });
-
-            const filteredWords = cleanTokens.filter(w => !STOP_WORDS.has(w));
-            const uniqueWords = [...new Set(filteredWords)];
-
-            if (uniqueWords.length === 0) {
-                statusEl.textContent = "⚠️ No clean words found. Try taking a closer photo.";
-                return;
-            }
-
-            statusEl.textContent = `✅ Extracted ${uniqueWords.length} words!`;
-
-            uniqueWords.forEach(word => {
-                const chip = document.createElement('button');
-                chip.type = "button";
-                chip.className = 'extracted-chip';
-                chip.textContent = `+ ${word}`;
-                chip.onclick = () => addExtractedWordToInput(word);
-                listEl.appendChild(chip);
-            });
-
-            containerEl.classList.remove('hidden');
-        } catch (err) {
-            console.error("OCR Exception:", err);
-            statusEl.textContent = "❌ Error processing image. Please try again.";
-        } finally {
-            inputEl.value = '';
-        }
-    }
-
-    function preprocessImage(file) {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                const maxDim = 1200;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > maxDim || height > maxDim) {
-                    if (width > height) {
-                        height = Math.round((height * maxDim) / width);
-                        width = maxDim;
-                    } else {
-                        width = Math.round((width * maxDim) / height);
-                        height = maxDim;
-                    }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-
-                ctx.drawImage(img, 0, 0, width, height);
-                const imgData = ctx.getImageData(0, 0, width, height);
-                const data = imgData.data;
-
-                for (let i = 0; i < data.length; i += 4) {
-                    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                    const v = avg < 128 ? Math.max(0, avg - 40) : Math.min(255, avg + 40);
-                    data[i] = v;
-                    data[i + 1] = v;
-                    data[i + 2] = v;
-                }
-
-                ctx.putImageData(imgData, 0, 0);
-                resolve(canvas.toDataURL('image/jpeg', 0.85));
-            };
-            img.src = URL.createObjectURL(file);
-        });
-    }
-
-    function addExtractedWordToInput(word) {
-        const textarea = document.getElementById('wordInput');
-        let parsed = getParsedWords(textarea.value);
-
-        if (parsed.length >= 10) {
-            alert("Maximum 10 words allowed.");
-            return;
-        }
-
-        if (!parsed.includes(word)) {
-            parsed.push(word);
-            textarea.value = parsed.join(', ');
-            limitWords();
-        }
-    }
-
-    function getParsedWords(text) {
-        return text.toUpperCase().split(/[\n,]+/).map(w => w.trim().replace(/[^A-Z]/g, '')).filter(w => w.length > 0);
-    }
-
-    function limitWords() {
-        const textarea = document.getElementById('wordInput');
-        let parsed = getParsedWords(textarea.value);
-        if (parsed.length > 10) {
-            parsed = parsed.slice(0, 10);
-            textarea.value = parsed.join(', ');
-        }
-        document.getElementById('wordCount').textContent = `Words: ${parsed.length} / 10`;
-    }
-
-    function startTimer() {
-        clearInterval(timerInterval);
-        secondsElapsed = 0;
-        updateTimerDisplay();
-        timerInterval = setInterval(() => {
-            secondsElapsed++;
-            updateTimerDisplay();
-        }, 1000);
-    }
-
-    function stopTimer() {
-        clearInterval(timerInterval);
-    }
-
-    function updateTimerDisplay() {
-        const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
-        const secs = String(secondsElapsed % 60).padStart(2, '0');
-        document.getElementById('timerDisplay').textContent = `⏱️ Time: ${mins}:${secs}`;
-    }
-
-    function loadBestScore(diff) {
-        const best = localStorage.getItem(`wordsearch_best_${diff}`);
-        if (best) {
-            const mins = String(Math.floor(best / 60)).padStart(2, '0');
-            const secs = String(best % 60).padStart(2, '0');
-            document.getElementById('bestScoreDisplay').textContent = `🏆 Best: ${mins}:${secs}`;
-        } else {
-            document.getElementById('bestScoreDisplay').textContent = `🏆 Best: --:--`;
-        }
-    }
-
-    function saveBestScore(diff, timeSecs) {
-        const existing = localStorage.getItem(`wordsearch_best_${diff}`);
-        if (!existing || timeSecs < parseInt(existing)) {
-            localStorage.setItem(`wordsearch_best_${diff}`, timeSecs);
-        }
-    }
-
+    // Demo Puzzle Generation
     function generatePuzzle() {
-        initAudio();
-        const diff = document.getElementById('difficultySelect').value;
-        GRID_SIZE = diff === 'easy' ? 8 : (diff === 'medium' ? 10 : (diff === 'hard' ? 12 : 15));
+      document.getElementById('setupView').style.display = 'none';
+      document.getElementById('gridView').style.display = 'block';
 
-        const rawInput = document.getElementById('wordInput').value;
-        words = getParsedWords(rawInput).slice(0, 10);
+      const gridEl = document.getElementById('grid');
+      gridEl.style.display = 'grid';
+      gridEl.innerHTML = '';
 
-        if (words.length === 0) {
-            alert("Please enter at least one valid word or select a theme.");
-            return;
-        }
-
-        words.sort((a, b) => b.length - a.length);
-
-        let success = false, retries = 0;
-        while (!success && retries < 50) {
-            retries++;
-            initGrid();
-            let placedAll = true;
-            for (let word of words) {
-                if (!placeWord(word, diff)) {
-                    placedAll = false; break;
-                }
-            }
-            if (placedAll) success = true;
-        }
-
-        fillEmptyCells();
-        renderGrid();
-        renderWordList();
-
-        foundWordsCount = 0;
-        loadBestScore(diff);
-        startTimer();
-
-        document.getElementById('inputSection').classList.add('hidden');
-        document.getElementById('puzzleArea').classList.remove('hidden');
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ012345678901".split('');
+      letters.slice(0, 64).forEach(char => {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.innerText = char;
+        tile.onclick = function() {
+          this.classList.toggle('active');
+          speakLetter(char);
+        };
+        gridEl.appendChild(tile);
+      });
     }
 
-    function resetToInput() {
-        stopTimer();
-        clearSelection();
-
-        const wordInput = document.getElementById('wordInput');
-        if (wordInput) wordInput.value = '';
-        const wordCount = document.getElementById('wordCount');
-        if (wordCount) wordCount.textContent = 'Words: 0 / 10';
-
-        document.getElementById('puzzleArea').classList.add('hidden');
-        document.getElementById('inputSection').classList.remove('hidden');
+    function backToSetup() {
+      document.getElementById('setupView').style.display = 'block';
+      document.getElementById('gridView').style.display = 'none';
     }
-
-    function initGrid() {
-        gridData = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(''));
-    }
-
-    function placeWord(word, diff) {
-        if (word.length > GRID_SIZE) return false;
-
-        let directions;
-
-        if (diff === 'super-hard') {
-            directions = [
-                [0, 1],   // Right
-                [1, 0],   // Down
-                [1, 1],   // Down-Right
-                [-1, 1],  // Up-Right
-                [0, -1],  // Left
-                [-1, 0],  // Up
-                [-1, -1], // Up-Left
-                [1, -1]   // Down-Left
-            ];
-        } else {
-            directions = [
-                [0, 1],   // Horizontal (Right)
-                [1, 0],   // Vertical (Down)
-                [1, 1]    // Diagonal (Down-Right)
-            ];
-        }
-
-        let attempts = 0;
-        while (attempts < 200) {
-            attempts++;
-            const dir = directions[Math.floor(Math.random() * directions.length)];
-            const row = Math.floor(Math.random() * GRID_SIZE);
-            const col = Math.floor(Math.random() * GRID_SIZE);
-
-            if (canPlace(word, row, col, dir)) {
-                for (let i = 0; i < word.length; i++) {
-                    gridData[row + i * dir[0]][col + i * dir[1]] = word[i];
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function canPlace(word, row, col, dir) {
-        for (let i = 0; i < word.length; i++) {
-            const r = row + i * dir[0], c = col + i * dir[1];
-            if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) return false;
-            if (gridData[r][c] !== '' && gridData[r][c] !== word[i]) return false;
-        }
-        return true;
-    }
-
-    function fillEmptyCells() {
-        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        for (let r = 0; r < GRID_SIZE; r++) {
-            for (let c = 0; c < GRID_SIZE; c++) {
-                if (gridData[r][c] === '') gridData[r][c] = letters[Math.floor(Math.random() * letters.length)];
-            }
-        }
-    }
-
-    function renderGrid() {
-        const gridEl = document.getElementById('grid');
-        gridEl.innerHTML = '';
-        gridEl.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 32px)`;
-
-        for (let r = 0; r < GRID_SIZE; r++) {
-            for (let c = 0; c < GRID_SIZE; c++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.textContent = gridData[r][c];
-                cell.dataset.row = r;
-                cell.dataset.col = c;
-                cell.addEventListener('click', handleCellClick);
-                gridEl.appendChild(cell);
-            }
-        }
-    }
-
-    function handleCellClick(e) {
-        initAudio();
-        const target = e.target;
-        const row = parseInt(target.dataset.row);
-        const col = parseInt(target.dataset.col);
-        const letter = gridData[row][col];
-
-        if (selectedPath.length === 0) {
-            selectedPath.push({ row, col, el: target });
-            target.classList.add('start-cell');
-            speakLetter(letter);
-            return;
-        }
-
-        if (selectedPath.length > 0 && selectedPath[0].row === row && selectedPath[0].col === col) {
-            clearSelection();
-            return;
-        }
-
-        const start = selectedPath[0];
-
-        if (selectedPath.length === 1) {
-            const dRow = row - start.row;
-            const dCol = col - start.col;
-
-            if (Math.abs(dRow) <= 1 && Math.abs(dCol) <= 1 && !(dRow === 0 && dCol === 0)) {
-                selectedPath.push({ row, col, el: target });
-                target.classList.add('selected');
-                speakLetter(letter);
-            }
-            return;
-        }
-
-        const dirRow = Math.sign(selectedPath[1].row - start.row);
-        const dirCol = Math.sign(selectedPath[1].col - start.col);
-
-        const lastCell = selectedPath[selectedPath.length - 1];
-        const nextExpectedRow = lastCell.row + dirRow;
-        const nextExpectedCol = lastCell.col + dirCol;
-
-        if (row === nextExpectedRow && col === nextExpectedCol) {
-            selectedPath.push({ row, col, el: target });
-            target.classList.add('selected');
-            speakLetter(letter);
-        }
-    }
-
-    function submitSelection() {
-        initAudio();
-        if (selectedPath.length === 0) return;
-
-        const diff = document.getElementById('difficultySelect').value;
-        const selectedWord = selectedPath.map(p => gridData[p.row][p.col]).join('');
-        const reversedWord = selectedWord.split('').reverse().join('');
-
-        let matchedWord = null;
-        if (words.includes(selectedWord)) {
-            matchedWord = selectedWord;
-        } else if (diff === 'super-hard' && words.includes(reversedWord)) {
-            matchedWord = reversedWord;
-        }
-
-        if (matchedWord) {
-            playSuccessSound();
-            selectedPath.forEach(p => {
-                p.el.classList.remove('start-cell', 'selected');
-                p.el.classList.add('found');
-            });
-            markWordAsFound(matchedWord);
-            selectedPath = [];
-
-            setTimeout(() => {
-                speakText(matchedWord);
-            }, 300);
-        } else {
-            selectedPath.forEach(p => {
-                if (!p.el.classList.contains('found')) p.el.style.backgroundColor = '#fca5a5';
-            });
-            setTimeout(() => {
-                selectedPath.forEach(p => {
-                    if (!p.el.classList.contains('found')) p.el.style.backgroundColor = '';
-                });
-                clearSelection();
-            }, 300);
-        }
-    }
-
-    function clearSelection() {
-        selectedPath.forEach(p => {
-            p.el.classList.remove('start-cell', 'selected');
-        });
-        selectedPath = [];
-    }
-
-    function renderWordList() {
-        const listEl = document.getElementById('wordListDisplay');
-        listEl.innerHTML = '';
-        words.forEach(word => {
-            const li = document.createElement('li');
-            li.className = 'word-item';
-            li.id = `word-${word}`;
-            li.textContent = word;
-            
-            li.style.cursor = 'pointer';
-            li.onclick = () => speakText(word);
-
-            listEl.appendChild(li);
-        });
-    }
-
-    function markWordAsFound(word) {
-        const wordEl = document.getElementById(`word-${word}`);
-        if (wordEl && !wordEl.classList.contains('found-word')) {
-            wordEl.classList.add('found-word');
-            foundWordsCount++;
-
-            if (foundWordsCount === words.length) {
-                handleVictory();
-            }
-        }
-    }
-
-    function handleVictory() {
-        stopTimer();
-        const diff = document.getElementById('difficultySelect').value;
-        saveBestScore(diff, secondsElapsed);
-
-        const mins = Math.floor(secondsElapsed / 60);
-        const secs = secondsElapsed % 60;
-        
-        document.getElementById('victoryMessage').textContent = 
-            `You found all ${words.length} words in ${mins > 0 ? mins + 'm ' : ''}${secs}s!`;
-        
-        document.getElementById('victoryModal').classList.remove('hidden');
-
-        if (typeof confetti === 'function') {
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        }
-    }
-
-    function closeModalAndReset() {
-        document.getElementById('victoryModal').classList.add('hidden');
-        resetToInput();
-    }
-</script>
-
+  </script>
 </body>
 </html>
