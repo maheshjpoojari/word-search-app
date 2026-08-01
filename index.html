@@ -406,7 +406,7 @@
         <!-- Settings Button -->
         <button class="icon-btn" onclick="openSettingsModal()" title="Audio Settings">🎵</button>
     </div>
-    
+
     <!-- Input Section -->
     <div id="inputSection">
         <div class="form-group">
@@ -545,37 +545,41 @@
 
     let audioMode = localStorage.getItem('wordsearch_audio_mode') || 'phonics';
 
-    // Pure Phonic Sounds Mapping (No Letter Names)
-    const PHONICS_SOUNDS = {
-        'A': 'aah',
-        'B': 'buh',
-        'C': 'kuh',
-        'D': 'duh',
-        'E': 'eeh',
-        'F': 'fff',
-        'G': 'guh',
-        'H': 'huh',
-        'I': 'iih',
-        'J': 'juh',
-        'K': 'kkh',
-        'L': 'lll',
-        'M': 'mmm',
-        'N': 'nnn',
-        'O': 'off',
-        'P': 'puh',
-        'Q': 'kwuh',
-        'R': 'rrr',
-        'S': 'sss',
-        'T': 'tuh',
-        'U': 'uuh',
-        'V': 'vvv',
-        'W': 'wuh',
-        'X': 'kss',
-        'Y': 'yuh',
-        'Z': 'zzz'
+    // Global Audio Instance & Timings for phonics.wav Sprite
+    const phonicsAudio = new Audio('phonics.wav');
+    let phonicsTimeout = null;
+
+    // Timestamps for each letter sound inside phonics.wav (Start time & Duration in seconds)
+    const LETTER_TIMINGS = {
+        'A': { start: 0.0,  duration: 0.8 },
+        'B': { start: 0.8,  duration: 0.8 },
+        'C': { start: 1.6,  duration: 0.8 },
+        'D': { start: 2.4,  duration: 0.8 },
+        'E': { start: 3.2,  duration: 0.8 },
+        'F': { start: 4.0,  duration: 0.8 },
+        'G': { start: 4.8,  duration: 0.8 },
+        'H': { start: 5.6,  duration: 0.8 },
+        'I': { start: 6.4,  duration: 0.8 },
+        'J': { start: 7.2,  duration: 0.8 },
+        'K': { start: 8.0,  duration: 0.8 },
+        'L': { start: 8.8,  duration: 0.8 },
+        'M': { start: 9.6,  duration: 0.8 },
+        'N': { start: 10.4, duration: 0.8 },
+        'O': { start: 11.2, duration: 0.8 },
+        'P': { start: 12.0, duration: 0.8 },
+        'Q': { start: 12.8, duration: 0.8 },
+        'R': { start: 13.6, duration: 0.8 },
+        'S': { start: 14.4, duration: 0.8 },
+        'T': { start: 15.2, duration: 0.8 },
+        'U': { start: 16.0, duration: 0.8 },
+        'V': { start: 16.8, duration: 0.8 },
+        'W': { start: 17.6, duration: 0.8 },
+        'X': { start: 18.4, duration: 0.8 },
+        'Y': { start: 19.2, duration: 0.8 },
+        'Z': { start: 20.0, duration: 0.8 }
     };
 
-    // Auto-detect a crisp UK/US Female voice for Web Speech engine
+    // Auto-detect a crisp UK/US Female voice for Web Speech engine (Alphabet Mode)
     function initVoices() {
         if (!('speechSynthesis' in window)) return;
         
@@ -641,13 +645,32 @@
         window.speechSynthesis.speak(utterance);
     }
 
+    /**
+     * CORE AUDIO FUNCTION:
+     * Plays the precise letter sound from phonics.wav in Phonics Mode, or uses TTS in Alphabet Mode.
+     */
     function speakLetter(letter) {
         letter = letter.toUpperCase();
 
         if (audioMode === 'phonics') {
-            const pureSound = PHONICS_SOUNDS[letter] || letter;
-            speakText(pureSound, 0.85);
+            const timing = LETTER_TIMINGS[letter];
+
+            if (timing) {
+                // Stop previous audio or timeout from rapid taps
+                phonicsAudio.pause();
+                if (phonicsTimeout) clearTimeout(phonicsTimeout);
+
+                // Jump to letter timestamp in phonics.wav
+                phonicsAudio.currentTime = timing.start;
+                phonicsAudio.play().catch(err => console.log("Audio play error:", err));
+
+                // Stop audio when letter sound duration ends
+                phonicsTimeout = setTimeout(() => {
+                    phonicsAudio.pause();
+                }, timing.duration * 1000);
+            }
         } else {
+            // Alphabet Mode: Recites letter names ("A", "B", "C")
             speakText(letter, 0.9);
         }
     }
