@@ -549,34 +549,34 @@
     const phonicsAudio = new Audio('phonics.wav');
     let phonicsTimeout = null;
 
-    // Recalibrated Timestamps (in seconds) for phonics.wav
+// Precise Waveform Timestamps for phonics.wav
     const LETTER_TIMINGS = {
-        'A': { start: 0.10, duration: 0.85 },
-        'B': { start: 1.10, duration: 0.70 },
-        'C': { start: 2.15, duration: 0.65 },
-        'D': { start: 3.10, duration: 0.70 },
-        'E': { start: 4.10, duration: 0.75 },
-        'F': { start: 5.15, duration: 0.75 },
-        'G': { start: 6.20, duration: 0.70 },
-        'H': { start: 7.20, duration: 0.70 },
-        'I': { start: 8.25, duration: 0.70 },
-        'J': { start: 9.25, duration: 0.75 },
-        'K': { start: 10.30, duration: 0.75 },
-        'L': { start: 11.35, duration: 0.85 },
-        'M': { start: 12.50, duration: 0.85 },
-        'N': { start: 13.60, duration: 0.80 },
-        'O': { start: 14.65, duration: 0.75 },
-        'P': { start: 15.65, duration: 0.70 },
-        'Q': { start: 16.70, duration: 0.80 },
-        'R': { start: 17.75, duration: 0.85 },
-        'S': { start: 18.90, duration: 0.85 },
-        'T': { start: 20.00, duration: 0.70 },
-        'U': { start: 21.00, duration: 0.75 },
-        'V': { start: 22.05, duration: 0.80 },
-        'W': { start: 23.15, duration: 0.80 },
-        'X': { start: 24.25, duration: 0.80 },
-        'Y': { start: 25.35, duration: 0.80 },
-        'Z': { start: 26.45, duration: 0.90 }
+        'A': { start: 0.00, duration: 0.85 }, // /ah/
+        'B': { start: 0.90, duration: 0.80 }, // /buh/
+        'C': { start: 1.80, duration: 0.75 }, // /kuh/
+        'D': { start: 2.70, duration: 0.75 }, // /duh/
+        'E': { start: 3.60, duration: 0.80 }, // /eh/
+        'F': { start: 4.60, duration: 0.80 }, // /fff/
+        'G': { start: 5.60, duration: 0.80 }, // /guh/
+        'H': { start: 6.60, duration: 0.80 }, // /huh/
+        'I': { start: 7.60, duration: 0.80 }, // /ih/
+        'J': { start: 8.60, duration: 0.80 }, // /juh/
+        'K': { start: 9.60, duration: 0.80 }, // /kuh/
+        'L': { start: 10.60, duration: 0.90 }, // /lll/
+        'M': { start: 11.70, duration: 0.90 }, // /mmm/
+        'N': { start: 12.80, duration: 0.85 }, // /nnn/
+        'O': { start: 13.85, duration: 0.80 }, // /off/
+        'P': { start: 14.85, duration: 0.75 }, // /puh/
+        'Q': { start: 15.80, duration: 0.85 }, // /kwuh/
+        'R': { start: 16.85, duration: 0.90 }, // /rrr/
+        'S': { start: 17.95, duration: 0.90 }, // /sss/
+        'T': { start: 19.05, duration: 0.75 }, // /tuh/
+        'U': { start: 20.00, duration: 0.80 }, // /uh/
+        'V': { start: 21.00, duration: 0.85 }, // /vvv/
+        'W': { start: 22.05, duration: 0.85 }, // /wuh/
+        'X': { start: 23.10, duration: 0.85 }, // /kss/
+        'Y': { start: 24.15, duration: 0.85 }, // /yuh/
+        'Z': { start: 25.20, duration: 0.95 }  // /zzz/
     };
 
     // Auto-detect a crisp UK/US Female voice for Web Speech engine (Alphabet Mode)
