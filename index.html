@@ -549,34 +549,34 @@
     const phonicsAudio = new Audio('phonics.wav');
     let phonicsTimeout = null;
 
-    // Exact Timestamps (in seconds) extracted directly from phonics.wav
+    // Recalibrated Timestamps (in seconds) for phonics.wav
     const LETTER_TIMINGS = {
-        'A': { start: 0.05, duration: 0.70 },
-        'B': { start: 1.15, duration: 0.70 },
-        'C': { start: 2.20, duration: 0.65 },
-        'D': { start: 3.25, duration: 0.65 },
-        'E': { start: 4.25, duration: 0.65 },
-        'F': { start: 5.25, duration: 0.70 },
-        'G': { start: 6.30, duration: 0.70 },
-        'H': { start: 7.35, duration: 0.70 },
-        'I': { start: 8.35, duration: 0.65 },
-        'J': { start: 9.35, duration: 0.70 },
-        'K': { start: 10.40, duration: 0.70 },
-        'L': { start: 11.45, duration: 0.75 },
-        'M': { start: 12.55, duration: 0.75 },
-        'N': { start: 13.65, duration: 0.75 },
-        'O': { start: 14.75, duration: 0.70 },
-        'P': { start: 15.80, duration: 0.65 },
-        'Q': { start: 16.80, duration: 0.75 },
-        'R': { start: 17.90, duration: 0.75 },
-        'S': { start: 19.00, duration: 0.75 },
-        'T': { start: 20.10, duration: 0.65 },
-        'U': { start: 21.10, duration: 0.70 },
-        'V': { start: 22.15, duration: 0.75 },
-        'W': { start: 23.25, duration: 0.70 },
-        'X': { start: 24.30, duration: 0.75 },
-        'Y': { start: 25.40, duration: 0.75 },
-        'Z': { start: 26.50, duration: 0.80 }
+        'A': { start: 0.10, duration: 0.85 },
+        'B': { start: 1.10, duration: 0.70 },
+        'C': { start: 2.15, duration: 0.65 },
+        'D': { start: 3.10, duration: 0.70 },
+        'E': { start: 4.10, duration: 0.75 },
+        'F': { start: 5.15, duration: 0.75 },
+        'G': { start: 6.20, duration: 0.70 },
+        'H': { start: 7.20, duration: 0.70 },
+        'I': { start: 8.25, duration: 0.70 },
+        'J': { start: 9.25, duration: 0.75 },
+        'K': { start: 10.30, duration: 0.75 },
+        'L': { start: 11.35, duration: 0.85 },
+        'M': { start: 12.50, duration: 0.85 },
+        'N': { start: 13.60, duration: 0.80 },
+        'O': { start: 14.65, duration: 0.75 },
+        'P': { start: 15.65, duration: 0.70 },
+        'Q': { start: 16.70, duration: 0.80 },
+        'R': { start: 17.75, duration: 0.85 },
+        'S': { start: 18.90, duration: 0.85 },
+        'T': { start: 20.00, duration: 0.70 },
+        'U': { start: 21.00, duration: 0.75 },
+        'V': { start: 22.05, duration: 0.80 },
+        'W': { start: 23.15, duration: 0.80 },
+        'X': { start: 24.25, duration: 0.80 },
+        'Y': { start: 25.35, duration: 0.80 },
+        'Z': { start: 26.45, duration: 0.90 }
     };
 
     // Auto-detect a crisp UK/US Female voice for Web Speech engine (Alphabet Mode)
